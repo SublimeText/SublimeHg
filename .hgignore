@@ -1,0 +1,14 @@
+syntax: glob
+
+*.hgtags
+
+*.pyc
+
+*.cache
+*.sublime-project
+
+MANIFEST
+dist/
+build/
+data/
+Doc/
