@@ -1,3 +1,4 @@
 [
-	{ "caption": "SublimeHG: Open Hg Command Prompt", "command": "hg" }
+	{ "caption": "SublimeHG: Hg", "command": "hg" },
+	{ "caption": "SublimeHG: Open Hg Command Prompt", "command": "hg_cmd_line" }
 ]
