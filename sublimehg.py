@@ -5,6 +5,34 @@ import subprocess
 import time
 import os
 
+
+def assemble_quoted_parts(tokens):
+    QUOTES = "\"'"
+    is_between_quotes = False
+    quote = ''
+    buf = ''
+    for el in tokens:
+        if is_between_quotes:
+            buf += el + ' '
+            if el[-1] == quote:
+                is_between_quotes = False
+                buf = buf.rstrip()
+                yield buf
+                buf = ''
+            continue
+
+        if not el[0] in QUOTES:
+            yield el
+        else:
+            is_between_quotes = True
+            quote = el[0]
+            buf += el + ' '
+    
+    # Missing quote, but we don't care.
+    if buf:
+        yield buf.rstrip()
+
+
 # XXX: Make async.
 
 class HGServer(object):
@@ -71,9 +99,12 @@ class HGServer(object):
             args = args[0].split()
 
         if args[0] == 'hg':
+            print "HGS:   : Stripped superfluous 'hg' from '%s'" % ' '.join(args)
             args = args[1:]
-            print "HGS:   : Stripped superfluous 'hg'"
+        
+        args = list(assemble_quoted_parts(args))
 
+        print "HGS:inf: Sending command '%s'" % ' '.join(args)
         self.write_block('runcommand', *args)
 
         rv = ''
@@ -85,7 +116,7 @@ class HGServer(object):
                 print "HGS:ret: %s" % struct.unpack('>l', line)[0]
                 return rv[:-1]
             else:
-                print "HGS:err: Most likely incomplete command was submitted."
+                print "HGS:err: " + line
                 rv = "Could not complete operation. Was your command complete?"
                 self.shut_down()
                 return rv
@@ -129,7 +160,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return
 
         try:
-            data = hgs.run_command(s)
+            data = hgs.run_command(s.encode(hgs.get_encoding()))
             p = self.view.window().get_output_panel('hgs')
             data = "Mercurial says...\n\n" + data
             p.insert(self.edit, 0, data)
@@ -151,7 +182,8 @@ SUBLIMEHG_CMDS = [
     "diff",
     # "export",
     # "forget",
-    # "init",
+    "help",
+    "init",
     "log",
     "merge",
     "pull",
@@ -193,4 +225,4 @@ class HgCommit(sublime_plugin.TextCommand):
         self.view.window().show_input_panel("Hg commit message:", '', self.on_done, None, None)
     
     def on_done(self, s):
-        self.view.run_command("hg_cmd_line", {"cmd":'commit "%s" -m "%s"' % (self.what, s)})
+        self.view.run_command("hg_cmd_line", {"cmd":"commit '%s' -m '%s'" % (self.what, s)})
