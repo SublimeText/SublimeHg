@@ -134,8 +134,9 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             data = "Mercurial says...\n\n" + data
             p.insert(self.edit, 0, data)
             self.view.window().run_command('show_panel', {'panel': 'output.hgs'})
-        except UnicodeDecodeError:
+        except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
+            print e
         finally:
             hgs.shut_down()
             os.chdir(old_cd)
@@ -146,6 +147,7 @@ SUBLIMEHG_CMDS = [
     "annotate",
     # "clone",
     "commit",
+    "commit (this file)",
     "diff",
     # "export",
     # "forget",
@@ -174,8 +176,12 @@ class HgCommand(sublime_plugin.TextCommand):
     
     def on_done(self, s):
         if s == -1: return
+
         if SUBLIMEHG_CMDS[s] == 'commit':
             self.view.run_command("hg_commit")
+            return
+        elif SUBLIMEHG_CMDS[s] == 'commit (this file)':
+            self.view.run_command("hg_commit", {"what": self.view.file_name()})
             return
 
         self.view.run_command("hg_cmd_line", {"cmd": SUBLIMEHG_CMDS[s]}) 
@@ -187,4 +193,6 @@ class HgCommit(sublime_plugin.TextCommand):
         self.view.window().show_input_panel("Hg commit message:", '', self.on_done, None, None)
     
     def on_done(self, s):
+        # XXX: This is bad.
+        # msg = self.what.encode('ascii')
         self.view.run_command("hg_cmd_line", {"cmd":"commit %s -m '%s'" % (self.what, s)})
