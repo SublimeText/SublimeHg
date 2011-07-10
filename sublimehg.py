@@ -5,26 +5,27 @@ import subprocess
 import time
 import os
 
+# XXX: Make async.
 
 class HGServer(object):
     """I drive a command server (Mercurial>=1.9) whose protocol is described
     here: http://mercurial.selenic.com/wiki/CommandServer
     """
-    def __init__(self):
+    def __init__(self, hg_exe='hg'):
         if os.name == 'nt':
             # Hide the child process window in Windows.
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
         self.server = subprocess.Popen(
-                                ["hg.bat", "serve", "--cmdserver", "pipe"],
+                                [hg_exe, "serve", "--cmdserver", "pipe"],
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 startupinfo=startupinfo
                                 )
 
         self.receive_greeting()
-
+    
     def receive_greeting(self):
         try:
             channel, data = self.read_data()
@@ -36,7 +37,15 @@ class HGServer(object):
             raise
             self.shut_down()
 
-        caps, enc = data.split('\n')
+        try:
+            caps, enc = data.split('\n')
+        except ValueError:
+            # Means the server isn't returnind the promised data, so the
+            # environment is wrong.
+            print "HGS:err: SublimeHG requires Mercurial>=1.9. (Probable cause.)"
+            self.shut_down()
+            raise EnvironmentError("SublimeHG requires Mercurial>=1.9")
+            
         caps = ', '.join(caps.split()[1:])
         print "HGS:   :", "Capabilities:", caps
         print "HGS:   : Encoding:", enc.split()[1]
@@ -91,6 +100,12 @@ class HGServer(object):
 
 
 class HgCommand(sublime_plugin.TextCommand):
+
+    def configure(self):
+        s = sublime.load_settings('Global.sublime-settings')
+        user_exe = s.get('packages.sublime_hg.hg_exe')
+        self.hg_exe = user_exe or 'hg'
+
     def run(self, edit):
         self.edit = edit
         self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
@@ -99,10 +114,15 @@ class HgCommand(sublime_plugin.TextCommand):
         old_cd = os.getcwd()
         os.chdir(os.path.dirname(self.view.file_name()))
 
+        if not hasattr(self, 'hg_exe'):
+            self.configure()
+
         try:
-            hgs = HGServer()
+            hgs = HGServer(self.hg_exe)
         except EnvironmentError, e:
             sublime.status_message("HGS:err:" + str(e))
+            # hgs.shut_down()
+            os.chdir(old_cd)
             return
 
         try:
@@ -112,7 +132,7 @@ class HgCommand(sublime_plugin.TextCommand):
             p.insert(self.edit, 0, data)
             self.view.window().run_command('show_panel', {'panel': 'output.hgs'})
         except UnicodeDecodeError:
-            print "Oops..."
+            print "Oops (funny characters!)..."
         finally:
             hgs.shut_down()
             os.chdir(old_cd)
