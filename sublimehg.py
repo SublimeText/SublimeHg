@@ -7,20 +7,31 @@ import os
 
 
 class HGServer(object):
+    """I drive a command server (Mercurial>=1.9) whose protocol is described
+    here: http://mercurial.selenic.com/wiki/CommandServer
+    """
     def __init__(self):
+        if os.name == 'nt':
+            # Hide the child process window in Windows.
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
         self.server = subprocess.Popen(
                                 ["hg.bat", "serve", "--cmdserver", "pipe"],
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE
+                                stderr=subprocess.PIPE,
+                                startupinfo=startupinfo
                                 )
 
-        # Receive greeting
+        self.receive_greeting()
+
+    def receive_greeting(self):
         try:
             channel, data = self.read_data()
         except struct.error:
             err = self.server.stderr.read()
-            raise EnvironmentError(err)
             self.shut_down()
+            raise EnvironmentError(err)
         except EnvironmentError:
             raise
             self.shut_down()
@@ -82,7 +93,7 @@ class HGServer(object):
 class HgCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         self.edit = edit
-        self.view.window().show_input_panel('HGS command:', 'status', self.on_done, None, None)
+        self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
     
     def on_done(self, s):
         old_cd = os.getcwd()
