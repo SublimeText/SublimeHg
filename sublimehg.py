@@ -99,16 +99,19 @@ class HGServer(object):
         self.server.stdin.close()
 
 
-class HgCommand(sublime_plugin.TextCommand):
+class HgCmdLineCommand(sublime_plugin.TextCommand):
 
     def configure(self):
         s = sublime.load_settings('Global.sublime-settings')
         user_exe = s.get('packages.sublime_hg.hg_exe')
         self.hg_exe = user_exe or 'hg'
 
-    def run(self, edit):
+    def run(self, edit, cmd=None):
         self.edit = edit
-        self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
+        if not cmd:
+            self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
+            return
+        self.on_done(cmd)
     
     def on_done(self, s):
         old_cd = os.getcwd()
@@ -136,3 +139,51 @@ class HgCommand(sublime_plugin.TextCommand):
         finally:
             hgs.shut_down()
             os.chdir(old_cd)
+
+
+SUBLIMEHG_CMDS = [
+    "add",
+    "annotate",
+    # "clone",
+    "commit",
+    "diff",
+    # "export",
+    # "forget",
+    # "init",
+    "log",
+    "merge",
+    "pull",
+    "push",
+    # "qdiff",
+    # "qnew",
+    # "qpop",
+    # "qpush",
+    # "qrefresh",
+    # "remove",
+    "serve",
+    "status",
+    "summary",
+    "update",
+]
+
+
+class HgCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        self.edit = edit
+        self.view.window().show_quick_panel(SUBLIMEHG_CMDS, self.on_done)
+    
+    def on_done(self, s):
+        if s == -1: return
+        if SUBLIMEHG_CMDS[s] == 'commit':
+            self.view.run_command("hg_commit")
+            return
+
+        self.view.run_command("hg_cmd_line", {"cmd": SUBLIMEHG_CMDS[s]}) 
+
+
+class HgCommit(sublime_plugin.TextCommand):
+    def run(self, edit, what=''):
+        self.view.window().show_input_panel("Hg commit message:", '', self.on_done, None, None)
+    
+    def on_done(self, s):
+        self.view.run_command("hg_cmd_line", {"cmd":"commit %s -m '%s'" % (what, s)})
