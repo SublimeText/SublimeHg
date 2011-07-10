@@ -193,6 +193,4 @@ class HgCommit(sublime_plugin.TextCommand):
         self.view.window().show_input_panel("Hg commit message:", '', self.on_done, None, None)
     
     def on_done(self, s):
-        # XXX: This is bad.
-        # msg = self.what.encode('ascii')
-        self.view.run_command("hg_cmd_line", {"cmd":"commit %s -m '%s'" % (self.what, s)})
+        self.view.run_command("hg_cmd_line", {"cmd":'commit "%s" -m "%s"' % (self.what, s)})
