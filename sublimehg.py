@@ -9,6 +9,8 @@ import os
 
 
 def assemble_quoted_parts(tokens):
+    """Takes a list of space-separated tokens and returns a list consumable by
+    Popen where quoted strings are reassambled again as a single token."""
     QUOTES = "\"'"
     is_between_quotes = False
     quote = ''
@@ -215,7 +217,9 @@ class HgCommand(sublime_plugin.TextCommand):
             self.view.run_command("hg_commit")
             return
         elif SUBLIMEHG_CMDS[s] == 'commit (this file)':
-            self.view.run_command("hg_commit", {"what": self.view.file_name()})
+            fn = self.view.file_name()
+            if not fn: return
+            self.view.run_command("hg_commit", {"what": fn})
             return
 
         self.view.run_command("hg_cmd_line", {"cmd": SUBLIMEHG_CMDS[s]}) 
