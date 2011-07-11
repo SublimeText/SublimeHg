@@ -165,32 +165,14 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
 
 
 SUBLIMEHG_CMDS = sorted([
-    "add",
-    "annotate",
-    # "clone",
-    "commit",
-    "commit (this file)",
-    "diff",
-    # "export",
-    # "forget",
-    "help",
-    "init",
-    "log",
-    "merge",
-    "pull",
-    "push",
-    "rollback",
-    # "qdiff",
-    # "qnew",
-    # "qpop",
-    # "qpush",
-    # "qrefresh",
-    # "remove",
-    "serve",
-    "status",
-    "summary",
-    "update",
-])
+    "add", "addremove", "annotate", "archive", "backout", "bisect",
+    "bookmarks", "branch", "branches", "bundle", "cat", "clone", "commit",
+    "copy", "diff", "export", "forget", "grep", "heads", "help", "identify",
+    "import", "incoming", "init", "locate", "log", "manifest", "merge",
+    "outgoing", "parents", "paths", "pull", "push", "recover", "remove",
+    "rename", "resolve", "revert", "rollback", "root", "showconfig", "status",
+    "summary", "tag", "tags", "tip", "unbundle", "update", "verify", "version"
+    ])
 
 
 class HgCommand(sublime_plugin.TextCommand):
