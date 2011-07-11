@@ -12,12 +12,6 @@ import atexit
 running_server = None
 
 
-def shut_down(server):
-    # XXX Is this needed?
-    if not running_server.stdin.closed():
-        running_server.stdin.close()
-
-
 def assemble_quoted_parts(tokens):
     """Takes a list of space-separated tokens and returns a generator that
     produces a sequence valid for Popen where quoted strings are reassambled
@@ -61,7 +55,7 @@ class HGServer(object):
     """
     def __init__(self, hg_exe='hg'):
         global running_server
-        if not running_server:
+        if not running_server or running_server.stdin.closed:
             startupinfo = None
             if os.name == 'nt':
                 # Hide the child process window on Windows.
@@ -76,7 +70,7 @@ class HGServer(object):
                                     )
 
             # Is this needed?
-            atexit.register(shut_down, self.server)
+            atexit.register(self.shut_down)
 
             self.receive_greeting()
             self.encoding = self.get_encoding()
@@ -93,10 +87,10 @@ class HGServer(object):
             channel, data = self.read_data()
         except struct.error:
             err = self.server.stderr.read()
-            self.shut_down()
             raise EnvironmentError(err)
         except EnvironmentError:
-            self.shut_down()
+            err = self.server.stderr.read()
+            EnvironmentError(err)
             raise
 
         try:
@@ -105,7 +99,6 @@ class HGServer(object):
             # Means the server isn't returning the promised data, so the
             # environment is wrong.
             print "SublimeHG:err: SublimeHG requires Mercurial>=1.9. (Probable cause.)"
-            self.shut_down()
             raise EnvironmentError("SublimeHG requires Mercurial>=1.9")
             
         caps = ', '.join(caps.split()[1:])
@@ -151,6 +144,7 @@ class HGServer(object):
                 return rv[:-1]
             else:
                 print "SublimeHG:err: " + line
+                #  XXX Ask user for more input.
                 rv = "Could not complete operation. Was your command complete?"
                 self.shut_down()
                 return rv
@@ -195,9 +189,9 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return
 
         try:
+            # Where's the encoding done here?
             data = hgs.run_command(s.encode(hgs.encoding))
             p = self.view.window().get_output_panel('hgs')
-            data = "Mercurial says...\n\n" + data
             p.insert(self.edit, 0, data)
             self.view.window().run_command('show_panel', {'panel': 'output.hgs'})
         except UnicodeDecodeError, e:
