@@ -580,7 +580,7 @@ class test(Command):
 
 
 setup(cmdclass={'spa': spa, 'install': install, 'test': test},
-      name='SublimeHG',
+      name='SublimeHg',
       version='0.1',
       description='An interface for Mercurial\'s command server for Sublime Text.',
       author='Guillermo López',
