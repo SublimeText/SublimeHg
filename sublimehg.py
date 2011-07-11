@@ -74,8 +74,8 @@ class HGServer(object):
             self.shut_down()
             raise EnvironmentError(err)
         except EnvironmentError:
-            raise
             self.shut_down()
+            raise
 
         try:
             caps, enc = data.split('\n')
@@ -139,7 +139,8 @@ class HGServer(object):
 
     def shut_down(self):
         print "SublimeHG: Shutting down HG server..."
-        self.server.stdin.close()
+        if not self.server.stdin.closed:
+            self.server.stdin.close()
 
 
 class HgCmdLineCommand(sublime_plugin.TextCommand):
