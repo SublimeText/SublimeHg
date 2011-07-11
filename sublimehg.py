@@ -19,6 +19,7 @@ def assemble_quoted_parts(tokens):
     for el in tokens:
         if is_between_quotes:
             buf += el + ' '
+            # XXX Will fail in the presence of \" or escaped quote?
             if el[-1] == quote:
                 is_between_quotes = False
                 buf = buf.rstrip()
@@ -33,7 +34,7 @@ def assemble_quoted_parts(tokens):
             quote = el[0]
             buf += el + ' '
     
-    # Missing quote, but we don't care.
+    # Missing quote, but it isn't our problem.
     if buf:
         yield buf.rstrip()
 
@@ -41,12 +42,14 @@ def assemble_quoted_parts(tokens):
 # XXX: Make async.
 
 class HGServer(object):
-    """I drive a command server (Mercurial>=1.9) whose protocol is described
-    here: http://mercurial.selenic.com/wiki/CommandServer
+    """I drive a Mercurial command server (Mercurial>=1.9).
+
+    Mercurial command server protocol: http://mercurial.selenic.com/wiki/CommandServer
     """
     def __init__(self, hg_exe='hg'):
+        startupinfo = None
         if os.name == 'nt':
-            # Hide the child process window in Windows.
+            # Hide the child process window on Windows.
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
