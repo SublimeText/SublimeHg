@@ -25,9 +25,9 @@ push-location $root
 	remove-item ".\MANIFEST" -erroraction silentlycontinue
 	& ".\setup.py" "spa"
 
-	(get-item ".\dist\%(package_name)s.sublime-package").fullname | clip.exe
+	(get-item ".\dist\SublimeHG.sublime-package").fullname | clip.exe
 pop-location
 
 if (-not $DontUpload) {
-	start-process "https://bitbucket.org/guillermooo/%(package_name)s/downloads"
+	start-process "https://bitbucket.org/guillermooo/sublimehg/downloads"
 }
