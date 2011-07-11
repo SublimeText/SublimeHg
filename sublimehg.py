@@ -6,7 +6,14 @@ import struct
 import subprocess
 import time
 import os
+import atexit
 
+
+running_server = None
+
+
+def turn_off(server):
+    running_server.stdin.close()
 
 def assemble_quoted_parts(tokens):
     """Takes a list of space-separated tokens and returns a generator that
@@ -49,21 +56,30 @@ class HGServer(object):
 
     Mercurial command server protocol: http://mercurial.selenic.com/wiki/CommandServer
     """
-    def __init__(self, hg_exe='hg'):
-        startupinfo = None
-        if os.name == 'nt':
-            # Hide the child process window on Windows.
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    def __init__(self, hg_exe='hg', server=None):
+        if not server:
+            startupinfo = None
+            if os.name == 'nt':
+                # Hide the child process window on Windows.
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-        self.server = subprocess.Popen(
-                                [hg_exe, "serve", "--cmdserver", "pipe"],
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                startupinfo=startupinfo
-                                )
+            self.server = subprocess.Popen(
+                                    [hg_exe, "serve", "--cmdserver", "pipe"],
+                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    startupinfo=startupinfo
+                                    )
 
-        self.receive_greeting()
+            atexit.register(turn_off, self.server)
+            self.receive_greeting()
+            self.encoding = self.get_encoding()
+            global running_server
+            running_server = self.server
+            return
+
+        # Reuse existing server.
+        self.server = server
         self.encoding = self.get_encoding()
     
     def receive_greeting(self):
@@ -80,7 +96,7 @@ class HGServer(object):
         try:
             caps, enc = data.split('\n')
         except ValueError:
-            # Means the server isn't returnind the promised data, so the
+            # Means the server isn't returning the promised data, so the
             # environment is wrong.
             print "SublimeHG:err: SublimeHG requires Mercurial>=1.9. (Probable cause.)"
             self.shut_down()
@@ -138,6 +154,7 @@ class HGServer(object):
         return self.read_data()[1]
 
     def shut_down(self):
+        return
         print "SublimeHG:inf: Shutting down HG server..."
         if not self.server.stdin.closed:
             self.server.stdin.close()
@@ -165,7 +182,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             self.configure()
 
         try:
-            hgs = HGServer(self.hg_exe)
+            hgs = HGServer(self.hg_exe, running_server)
         except EnvironmentError, e:
             sublime.status_message("SublimeHG:err:" + str(e))
             # hgs.shut_down()
@@ -182,7 +199,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             print "Oops (funny characters!)..."
             print e
         finally:
-            hgs.shut_down()
+            # hgs.shut_down()
             os.chdir(old_cd)
 
 
@@ -216,6 +233,7 @@ SUBLIMEHG_CMDS = sorted([
 
 
 class HgCommand(sublime_plugin.TextCommand):
+
     def run(self, edit):
         self.edit = edit
         self.view.window().show_quick_panel(SUBLIMEHG_CMDS, self.on_done)
