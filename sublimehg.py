@@ -146,7 +146,6 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             hgs = HGServer(self.hg_exe)
         except EnvironmentError, e:
             sublime.status_message("SublimeHG:err:" + str(e))
-            # hgs.shut_down()
             os.chdir(old_cd)
             return
 
@@ -160,10 +159,9 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             print "Oops (funny characters!)..."
             print e
         finally:
-            # hgs.shut_down()
             os.chdir(old_cd)
 
-
+# TODO: Add serve and start in a separate process?
 SUBLIMEHG_CMDS = sorted([
     "add", "addremove", "annotate", "archive", "backout", "bisect",
     "bookmarks", "branch", "branches", "bundle", "cat", "clone", "commit",
