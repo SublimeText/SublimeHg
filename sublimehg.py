@@ -98,7 +98,7 @@ class HGServer(object):
         self.server.stdin.write(cmd + '\n')
 
         if args:
-            data = '\0'.join(args) if len(args) > 1 else args[0]
+            data = '\0'.join(args) + '\0'
             length = struct.pack('>l', len(data))
             self.server.stdin.write(length + data)
             self.server.stdin.flush()
