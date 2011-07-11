@@ -21,8 +21,10 @@ def assemble_quoted_parts(tokens):
             buf += el + ' '
             # XXX Will fail in the presence of \" or escaped quote?
             if el[-1] == quote:
+                # Strip last space and quotation mark, because we don't want
+                # them in the message.
+                buf = buf[:-2]
                 is_between_quotes = False
-                buf = buf.rstrip()
                 yield buf
                 buf = ''
             continue
@@ -32,7 +34,8 @@ def assemble_quoted_parts(tokens):
         else:
             is_between_quotes = True
             quote = el[0]
-            buf += el + ' '
+            # Strip the quotation mark, because we don't want it in the message.
+            buf += el[1:] + ' '
     
     # Missing quote, but it isn't our problem.
     if buf:
