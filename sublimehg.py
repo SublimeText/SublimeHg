@@ -138,7 +138,7 @@ class HGServer(object):
         return self.read_data()[1]
 
     def shut_down(self):
-        print "SublimeHG: Shutting down HG server..."
+        print "SublimeHG:inf: Shutting down HG server..."
         if not self.server.stdin.closed:
             self.server.stdin.close()
 
