@@ -49,5 +49,6 @@ To use SublimeHG:
 Bugs
 ====
 
-SublimeHG will fail to commit files with spaces in their paths. You can use
-wilcards instead from the command-line interface to work around this.
+- SublimeHG will fail to commit files with spaces in their paths. You can use
+  wilcards instead from the command-line interface to work around this.
+- Commit messages will include undesired quotation marks.
