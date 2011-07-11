@@ -61,6 +61,7 @@ class HGServer(object):
                                 )
 
         self.receive_greeting()
+        self.encoding = self.get_encoding()
     
     def receive_greeting(self):
         try:
@@ -169,7 +170,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return
 
         try:
-            data = hgs.run_command(s.encode(hgs.get_encoding()))
+            data = hgs.run_command(s.encode(hgs.encoding))
             p = self.view.window().get_output_panel('hgs')
             data = "Mercurial says...\n\n" + data
             p.insert(self.edit, 0, data)
