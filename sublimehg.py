@@ -12,42 +12,6 @@ import shlex
 running_server = None
 
 
-# def assemble_quoted_parts(tokens):
-#     """Takes a list of space-separated tokens and returns a generator that
-#     produces a sequence valid for Popen where quoted strings are reassambled
-#     again as a single token."""
-#     QUOTES = "\"'"
-#     is_between_quotes = False
-#     quote = ''
-#     buf = ''
-#     for el in tokens:
-#         if is_between_quotes:
-#             buf += el + ' '
-#             # XXX Will fail in the presence of \" or escaped quote?
-#             if el[-1] == quote:
-#                 # Strip last space and quotation mark, because we don't want
-#                 # them in the message.
-#                 buf = buf[:-2]
-#                 is_between_quotes = False
-#                 yield buf
-#                 buf = ''
-#             continue
-
-#         if not el[0] in QUOTES:
-#             yield el
-#         else:
-#             is_between_quotes = True
-#             quote = el[0]
-#             # Strip the quotation mark, because we don't want it in the message.
-#             buf += el[1:] + ' '
-    
-#     # Missing quote, but it isn't our problem.
-#     if buf:
-#         yield buf.rstrip()
-
-
-# XXX: Make async.
-
 class HGServer(object):
     """I drive a Mercurial command server (Mercurial>=1.9).
 
@@ -129,8 +93,6 @@ class HGServer(object):
             print "SublimeHG:inf: Stripped superfluous 'hg' from '%s'" % ' '.join(args)
             args = args[1:]
         
-        # args = list(assemble_quoted_parts(args))
-
         print "SublimeHG:inf: Sending command '%s' as %s" % (' '.join(args), args)
         self.write_block('runcommand', *args)
 
