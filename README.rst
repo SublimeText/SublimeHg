@@ -41,9 +41,10 @@ They only differ in how you issue commands to Mercurial.
 
 To use SublimeHG:
 
-#. Open de Command Palette (:kbd:`Ctrl+Shift+P`) and look for ``SublimeHG``.
+#. Open de Command Palette (``Ctrl+Shift+P``) and look for ``SublimeHG``.
 #. Select option
 #. Select Mercurial command or type in command line
+
 
 Bugs
 ====
