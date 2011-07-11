@@ -12,8 +12,11 @@ import atexit
 running_server = None
 
 
-def turn_off(server):
-    running_server.stdin.close()
+def shut_down(server):
+    # XXX Is this needed?
+    if not running_server.stdin.closed():
+        running_server.stdin.close()
+
 
 def assemble_quoted_parts(tokens):
     """Takes a list of space-separated tokens and returns a generator that
@@ -71,7 +74,8 @@ class HGServer(object):
                                     startupinfo=startupinfo
                                     )
 
-            atexit.register(turn_off, self.server)
+            # Is this needed?
+            atexit.register(shut_down, self.server)
             self.receive_greeting()
             self.encoding = self.get_encoding()
             global running_server
