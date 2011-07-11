@@ -153,7 +153,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             # Where's the encoding done here?
             data = hgs.run_command(s.encode(hgs.encoding))
             p = self.view.window().get_output_panel('hgs')
-            p.insert(self.edit, 0, data)
+            p.insert(self.edit, 0, data.decode(hgs.encoding))
             self.view.window().run_command('show_panel', {'panel': 'output.hgs'})
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
