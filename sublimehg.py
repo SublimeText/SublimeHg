@@ -59,8 +59,9 @@ class HGServer(object):
 
     Mercurial command server protocol: http://mercurial.selenic.com/wiki/CommandServer
     """
-    def __init__(self, hg_exe='hg', server=None):
-        if not server:
+    def __init__(self, hg_exe='hg'):
+        global running_server
+        if not running_server:
             startupinfo = None
             if os.name == 'nt':
                 # Hide the child process window on Windows.
@@ -76,14 +77,15 @@ class HGServer(object):
 
             # Is this needed?
             atexit.register(shut_down, self.server)
+
             self.receive_greeting()
             self.encoding = self.get_encoding()
-            global running_server
+
             running_server = self.server
             return
 
         # Reuse existing server.
-        self.server = server
+        self.server = running_server
         self.encoding = self.get_encoding()
     
     def receive_greeting(self):
@@ -158,7 +160,6 @@ class HGServer(object):
         return self.read_data()[1]
 
     def shut_down(self):
-        return
         print "SublimeHG:inf: Shutting down HG server..."
         if not self.server.stdin.closed:
             self.server.stdin.close()
@@ -186,7 +187,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             self.configure()
 
         try:
-            hgs = HGServer(self.hg_exe, running_server)
+            hgs = HGServer(self.hg_exe)
         except EnvironmentError, e:
             sublime.status_message("SublimeHG:err:" + str(e))
             # hgs.shut_down()
