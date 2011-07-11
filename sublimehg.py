@@ -4,9 +4,9 @@ import sublime_plugin
 import sys
 import struct
 import subprocess
-import time
 import os
 import atexit
+import shlex
 
 
 running_server = None
@@ -123,13 +123,16 @@ class HGServer(object):
 
     def run_command(self, *args):
         if len(args) == 1 and ' ' in args[0]:
-            args = args[0].split()
+            print args
+            # args = args[0].split()
+            args = shlex.split(args[0])
+            print "XXX", args
 
         if args[0] == 'hg':
             print "SublimeHG:inf: Stripped superfluous 'hg' from '%s'" % ' '.join(args)
             args = args[1:]
         
-        args = list(assemble_quoted_parts(args))
+        # args = list(assemble_quoted_parts(args))
 
         print "SublimeHG:inf: Sending command '%s' as %s" % (' '.join(args), args)
         self.write_block('runcommand', *args)
