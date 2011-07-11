@@ -106,7 +106,7 @@ class HGServer(object):
                 return rv[:-1]
             else:
                 print "SublimeHG:err: " + line
-                #  XXX Ask user for more input.
+                #  XXX Ask user for more input instead of blowing up.
                 rv = "Could not complete operation. Was your command complete?"
                 self.shut_down()
                 return rv
