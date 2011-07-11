@@ -84,8 +84,8 @@ class HGServer(object):
             raise EnvironmentError("SublimeHG requires Mercurial>=1.9")
             
         caps = ', '.join(caps.split()[1:])
-        print "SublimeHG:   :", "Capabilities:", caps
-        print "SublimeHG:   : Encoding:", enc.split()[1]
+        print "SublimeHG:inf:", "Capabilities:", caps
+        print "SublimeHG:inf: Encoding:", enc.split()[1]
 
     def read_data(self):
         channel, length = struct.unpack('>cI', self.server.stdout.read(5))
@@ -108,13 +108,12 @@ class HGServer(object):
             args = args[0].split()
 
         if args[0] == 'hg':
-            print "SublimeHG:   : Stripped superfluous 'hg' from '%s'" % ' '.join(args)
+            print "SublimeHG:inf: Stripped superfluous 'hg' from '%s'" % ' '.join(args)
             args = args[1:]
         
         args = list(assemble_quoted_parts(args))
-        print "XXX", args
 
-        print "SublimeHG:inf: Sending command '%s'" % ' '.join(args)
+        print "SublimeHG:inf: Sending command '%s' as %s" % (' '.join(args), args)
         self.write_block('runcommand', *args)
 
         rv = ''
