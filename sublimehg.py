@@ -186,7 +186,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             os.chdir(old_cd)
 
 
-SUBLIMEHG_CMDS = [
+SUBLIMEHG_CMDS = sorted([
     "add",
     "annotate",
     # "clone",
@@ -201,6 +201,7 @@ SUBLIMEHG_CMDS = [
     "merge",
     "pull",
     "push",
+    "rollback",
     # "qdiff",
     # "qnew",
     # "qpop",
@@ -211,7 +212,7 @@ SUBLIMEHG_CMDS = [
     "status",
     "summary",
     "update",
-]
+])
 
 
 class HgCommand(sublime_plugin.TextCommand):
