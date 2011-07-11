@@ -14,9 +14,9 @@ Requirements
 Getting Started
 ===============
 
-- Download and install `SublimeHG`_. (See `installation instructions`_ for ``.sublime-package`` files.)
+- `Download`_ and install SublimeHG. (See `installation instructions`_ for ``.sublime-package`` files.)
 
-.. _SublimeHG: https://bitbucket.org/guillermooo/downloads/sublimehg.sublime-package
+.. _Download: https://bitbucket.org/guillermooo/downloads/sublimehg.sublime-package
 .. _installation instructions: http://sublimetext.info/docs/en/extensibility/packages.html#installation-of-packages
 
 
@@ -27,23 +27,29 @@ By default, SublimeHG uses ``hg`` as the default executable name for Mercurial.
 If you need to use a different one, like ``hg.bat``, set the variable
 ``packages.sublime_hg.hg_exe`` to it in your global settings (**Preferences | User Global Settings**).
 
+Example::
+
+   {
+      "packages.sublime_hg.hg_exe": "hg.bat"
+   }
+
 
 How to Use
 ==========
 
-SublimeHG offers two ways of using it:
+SublimeHG can be used in two ways:
 
-- A menu-driven interface (``hg``)
-- A command-line interface (``hg_command_line``)
+- Through a menu-driven interface (command: ``hg``)
+- Through a *command-line* interface (command: ``hg_command_line``)
 
-Both systems ultimately use the new Mercrurial command server (Mercurial 1.9).
-They only differ in how you issue commands to Mercurial.
+Both systems ultimately talk to the new Mercurial command server; they only
+differ in how you specify commands to it.
 
-To use SublimeHG:
+Normally, you will follow this steps:
 
-#. Open de Command Palette (``Ctrl+Shift+P``) and look for ``SublimeHG``.
+#. Open the Command Palette (``Ctrl+Shift+P``) and look for ``SublimeHG``.
 #. Select option
-#. Select Mercurial command or type in command line
+#. Select Mercurial command (or type in command line)
 
 
 Bugs
@@ -51,4 +57,3 @@ Bugs
 
 - SublimeHG will fail to commit files with spaces in their paths. You can use
   wilcards instead from the command-line interface to work around this.
-- Commit messages will include undesired quotation marks.
