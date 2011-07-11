@@ -125,7 +125,7 @@ class HGServer(object):
             if channel == 'o':
                 rv += line
             elif channel == 'r':
-                print "SublimeHG:ret: %s" % struct.unpack('>l', line)[0]
+                print "SublimeHG:inf: Return value: %s" % struct.unpack('>l', line)[0]
                 return rv[:-1]
             else:
                 print "SublimeHG:err: " + line
