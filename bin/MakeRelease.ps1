@@ -25,7 +25,7 @@ push-location $root
 	remove-item ".\MANIFEST" -erroraction silentlycontinue
 	& ".\setup.py" "spa"
 
-	(get-item ".\dist\SublimeHG.sublime-package").fullname | clip.exe
+	(get-item ".\dist\SublimeHg.sublime-package").fullname | clip.exe
 pop-location
 
 if (-not $DontUpload) {
