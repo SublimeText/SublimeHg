@@ -9,8 +9,9 @@ import os
 
 
 def assemble_quoted_parts(tokens):
-    """Takes a list of space-separated tokens and returns a list consumable by
-    Popen where quoted strings are reassambled again as a single token."""
+    """Takes a list of space-separated tokens and returns a generator that
+    produces a sequence valid for Popen where quoted strings are reassambled
+    again as a single token."""
     QUOTES = "\"'"
     is_between_quotes = False
     quote = ''
