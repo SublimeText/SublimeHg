@@ -74,13 +74,13 @@ class HGServer(object):
         except ValueError:
             # Means the server isn't returnind the promised data, so the
             # environment is wrong.
-            print "HGS:err: SublimeHG requires Mercurial>=1.9. (Probable cause.)"
+            print "SublimeHG:err: SublimeHG requires Mercurial>=1.9. (Probable cause.)"
             self.shut_down()
             raise EnvironmentError("SublimeHG requires Mercurial>=1.9")
             
         caps = ', '.join(caps.split()[1:])
-        print "HGS:   :", "Capabilities:", caps
-        print "HGS:   : Encoding:", enc.split()[1]
+        print "SublimeHG:   :", "Capabilities:", caps
+        print "SublimeHG:   : Encoding:", enc.split()[1]
 
     def read_data(self):
         channel, length = struct.unpack('>cI', self.server.stdout.read(5))
@@ -103,12 +103,13 @@ class HGServer(object):
             args = args[0].split()
 
         if args[0] == 'hg':
-            print "HGS:   : Stripped superfluous 'hg' from '%s'" % ' '.join(args)
+            print "SublimeHG:   : Stripped superfluous 'hg' from '%s'" % ' '.join(args)
             args = args[1:]
         
         args = list(assemble_quoted_parts(args))
+        print "XXX", args
 
-        print "HGS:inf: Sending command '%s'" % ' '.join(args)
+        print "SublimeHG:inf: Sending command '%s'" % ' '.join(args)
         self.write_block('runcommand', *args)
 
         rv = ''
@@ -117,10 +118,10 @@ class HGServer(object):
             if channel == 'o':
                 rv += line
             elif channel == 'r':
-                print "HGS:ret: %s" % struct.unpack('>l', line)[0]
+                print "SublimeHG:ret: %s" % struct.unpack('>l', line)[0]
                 return rv[:-1]
             else:
-                print "HGS:err: " + line
+                print "SublimeHG:err: " + line
                 rv = "Could not complete operation. Was your command complete?"
                 self.shut_down()
                 return rv
@@ -130,7 +131,7 @@ class HGServer(object):
         return self.read_data()[1]
 
     def shut_down(self):
-        print "HGS: Shutting down HG server..."
+        print "SublimeHG: Shutting down HG server..."
         self.server.stdin.close()
 
 
@@ -158,7 +159,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         try:
             hgs = HGServer(self.hg_exe)
         except EnvironmentError, e:
-            sublime.status_message("HGS:err:" + str(e))
+            sublime.status_message("SublimeHG:err:" + str(e))
             # hgs.shut_down()
             os.chdir(old_cd)
             return
@@ -231,4 +232,7 @@ class HgCommit(sublime_plugin.TextCommand):
         self.view.window().show_input_panel("Hg commit message:", '', self.on_done, None, None)
     
     def on_done(self, s):
+        if ' ' in self.what:
+            self.view.run_command("hg_cmd_line", {"cmd":"commit '%s' -m '%s'" % (self.what, s)})
+            return
         self.view.run_command("hg_cmd_line", {"cmd":"commit %s -m '%s'" % (self.what, s)})
