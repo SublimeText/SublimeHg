@@ -1,5 +1,7 @@
 ﻿# encoding: utf-8
 
+PACKAGE_VERSION = "0.5"
+
 """Commands to build and manage .sublime-package archives with distutils."""
 
 import sys
@@ -581,8 +583,8 @@ class test(Command):
 
 setup(cmdclass={'spa': spa, 'install': install, 'test': test},
       name='SublimeHg',
-      version='0.1',
-      description='An interface for Mercurial\'s command server for Sublime Text.',
+      version=PACKAGE_VERSION,
+      description='An interface for Mercurial\'s command server for Sublime Text 2.',
       author='Guillermo López',
       author_email='guilan70@hotmail.com',
       url='sublimetext.info',
