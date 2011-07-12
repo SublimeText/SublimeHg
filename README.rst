@@ -45,7 +45,7 @@ SublimeHg can be used in two ways:
 Both systems ultimately talk to the new Mercurial command server; they only
 differ in how you specify commands to it.
 
-Normally, you will follow this steps:
+Normally, you will follow these steps:
 
 #. Open the Command Palette (``Ctrl+Shift+P``) and look for ``SublimeHg``.
 #. Select option
