@@ -54,8 +54,7 @@ class HGServer(object):
             raise EnvironmentError(err)
         except EnvironmentError:
             err = self.server.stderr.read()
-            EnvironmentError(err)
-            raise
+            raise EnvironmentError(err)
 
         try:
             caps, enc = data.split('\n')
@@ -105,7 +104,7 @@ class HGServer(object):
                 print "SublimeHg:inf: Return value: %s" % struct.unpack('>l', line)[0]
                 return rv[:-1]
             else:
-                print "SublimeHg:err: " + line
+                print "SublimeHg:err: " + line[:-1] + " :: Channel:" + channel
                 #  XXX Ask user for more input instead of blowing up.
                 rv = "Could not complete operation. Was your command complete?"
                 self.shut_down()
