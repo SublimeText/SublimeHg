@@ -40,7 +40,7 @@ How to Use
 SublimeHg can be used in two ways:
 
 - Through a menu-driven interface (command: ``hg``)
-- Through a *command-line* interface (command: ``hg_command_line``)
+- Through a *command-line* interface (command: ``hg_cmd_line``)
 
 Both systems ultimately talk to the new Mercurial command server; they only
 differ in how you specify commands to it.
@@ -50,6 +50,10 @@ Normally, you will follow this steps:
 #. Open the Command Palette (``Ctrl+Shift+P``) and look for ``SublimeHg``.
 #. Select option
 #. Select Mercurial command (or type in command line)
+
+**Note:** Due to issues with input focus in widgets in Sublime Text 2080 and
+lower, you might need to assign this commands their own key bindings in order
+to make them work. They may not work from you from the Command Palette.
 
 
 Bugs
