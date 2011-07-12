@@ -54,10 +54,3 @@ Normally, you will follow this steps:
 **Note:** Due to issues with input focus in widgets in Sublime Text 2080 and
 lower, you might need to assign this commands their own key bindings in order
 to make them work. They may not work from you from the Command Palette.
-
-
-Bugs
-====
-
-- SublimeHg will fail to commit files with spaces in their paths. You can use
-  wilcards instead from SublimeHg command-line interface to work around this.
