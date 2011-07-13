@@ -7,6 +7,8 @@ syntax: glob
 *.cache
 *.sublime-project
 
+_*.txt
+
 MANIFEST
 dist/
 build/
