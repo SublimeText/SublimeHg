@@ -166,6 +166,7 @@ SUBLIMEHG_CMDS = sorted([
     "add",
     "addremove",
     "annotate",
+    "annotate (this file)",
     "archive",
     "backout",
     "bisect",
@@ -179,6 +180,7 @@ SUBLIMEHG_CMDS = sorted([
     "commit (this file)",
     "copy",
     "diff",
+    "diff (this file)",
     "export",
     "forget",
     "grep",
@@ -206,6 +208,7 @@ SUBLIMEHG_CMDS = sorted([
     "root",
     "showconfig",
     "status",
+    "status (this file)",
     "summary",
     "tag",
     "tags",
@@ -226,17 +229,50 @@ class HgCommand(sublime_plugin.TextCommand):
     def on_done(self, s):
         if s == -1: return
 
-        if SUBLIMEHG_CMDS[s] == 'commit':
-            self.view.run_command("hg_commit")
+        hg_cmd = SUBLIMEHG_CMDS[s]
+        fn = self.view.file_name()
+
+        #######################################################################
+        # XXX: Move all this mess to a data structure
+        #######################################################################
+        if hg_cmd == 'commit':
+            content = dict(caption='Commit message:',
+                            fmtstr="commit -m '%(input)s'")
+            self.view.run_command("hg_command_asking", content)
+            # self.view.run_command("hg_commit")
             return
-        elif SUBLIMEHG_CMDS[s] == 'commit (this file)':
-            fn = self.view.file_name()
+        elif hg_cmd == 'commit (this file)':
             if not fn: return
-            self.view.run_command("hg_commit", {"what": fn})
+            content = dict(caption='Commit message:',
+                            fmtstr="commit '%(fname)s' -m '%(input)s'",
+                            fname=fn)
+            self.view.run_command("hg_command_asking", content)
+            # self.view.run_command("hg_commit", {"what": fn})
+            return
+        elif hg_cmd == 'annotate (this file)':
+            if not fn: return
+            content = dict(caption='',
+                            fmtstr="annotate '%(fname)s'",
+                            fname=fn)
+            self.view.run_command('hg_command_asking', content)
+            return
+        elif hg_cmd == 'diff (this file)':
+            if not fn: return
+            content = dict(caption='',
+                            fmtstr="diff '%(fname)s'",
+                            fname=fn)
+            self.view.run_command('hg_command_asking', content)
+            return
+        elif hg_cmd == 'status (this file)':
+            if not fn: return
+            content = dict(caption='',
+                            fmtstr="status '%(fname)s'",
+                            fname=fn)
+            self.view.run_command('hg_command_asking', content)
             return
 
-        self.view.run_command("hg_cmd_line", {"cmd": SUBLIMEHG_CMDS[s]}) 
-
+        self.view.run_command("hg_cmd_line", {"cmd": hg_cmd}) 
+        #######################################################################
 
 class HgCommit(sublime_plugin.TextCommand):
     def run(self, edit, what=''):
@@ -245,3 +281,18 @@ class HgCommit(sublime_plugin.TextCommand):
     
     def on_done(self, s):
         self.view.run_command("hg_cmd_line", {"cmd":"commit '%s' -m '%s'" % (self.what, s)})
+
+
+class HgCommandAskingCommand(sublime_plugin.TextCommand):
+    def run(self, edit, caption='', fmtstr='', **kwargs):
+        self.fmtstr = fmtstr
+        self.content = kwargs
+        if caption:
+            self.view.window().show_input_panel(caption, '', self.on_done, None, None)
+            return
+        
+        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr % self.content})
+    
+    def on_done(self, s):
+        self.content['input'] = s
+        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr % self.content})
