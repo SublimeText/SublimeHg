@@ -272,14 +272,6 @@ class HgCommand(sublime_plugin.TextCommand):
         self.view.run_command("hg_cmd_line", {"cmd": hg_cmd}) 
         #######################################################################
 
-class HgCommit(sublime_plugin.TextCommand):
-    def run(self, edit, what=''):
-        self.what = what
-        self.view.window().show_input_panel("Hg commit message:", '', self.on_done, None, None)
-    
-    def on_done(self, s):
-        self.view.run_command("hg_cmd_line", {"cmd":"commit '%s' -m '%s'" % (self.what, s)})
-
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
     def run(self, edit, caption='', fmtstr='', **kwargs):
