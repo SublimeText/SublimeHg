@@ -239,7 +239,6 @@ class HgCommand(sublime_plugin.TextCommand):
             content = dict(caption='Commit message:',
                             fmtstr="commit -m '%(input)s'")
             self.view.run_command("hg_command_asking", content)
-            # self.view.run_command("hg_commit")
             return
         elif hg_cmd == 'commit (this file)':
             if not fn: return
@@ -247,7 +246,6 @@ class HgCommand(sublime_plugin.TextCommand):
                             fmtstr="commit '%(fname)s' -m '%(input)s'",
                             fname=fn)
             self.view.run_command("hg_command_asking", content)
-            # self.view.run_command("hg_commit", {"what": fn})
             return
         elif hg_cmd == 'annotate (this file)':
             if not fn: return
