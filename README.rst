@@ -53,4 +53,4 @@ Normally, you will follow these steps:
 
 **Note:** Due to issues with input focus in widgets in Sublime Text 2080 and
 lower, you might need to assign these commands their own key bindings in order
-to make them work. They may not work from you from the Command Palette.
+to make them work. They may not work for you from the Command Palette.
