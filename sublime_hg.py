@@ -202,6 +202,7 @@ SUBLIMEHG_CMDS = {
     "log (this file)": ['log "%(file_name)s"', None],
     "manifest": ['', None],
     "merge": ['', None],
+    "merge...": ['merge "%(input)s"', "Revision to merge with:"],
     "outgoing": ['', None],
     "parents": ['', None],
     "paths": ['', None],
