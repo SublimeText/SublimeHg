@@ -50,7 +50,3 @@ Normally, you will follow these steps:
 #. Open the Command Palette (``Ctrl+Shift+P``) and look for ``SublimeHg``.
 #. Select option
 #. Select Mercurial command (or type in command line)
-
-**Note:** Due to issues with input focus in widgets in Sublime Text 2080 and
-lower, you might need to assign these commands their own key bindings in order
-to make them work. They may not work for you from the Command Palette.
