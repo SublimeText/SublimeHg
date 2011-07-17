@@ -167,61 +167,66 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
 
 # TODO: Add serve and start in a separate process?
 SUBLIMEHG_CMDS = {
-    # "add",
-    # "addremove",
-    # "annotate",
-    # "annotate (this file)",
-    # "archive",
-    # "backout",
-    # "bisect",
-    # "bookmarks",
     # Used named tuples
+    "add": ['', None],
+    "add (this file)": ['add "%(file_name)s"', None],
+    "addremove": ['', None],
+    "annotate (this file)": ['annotate "%(file_name)s"', None],
+    # "archive", # Too complicated for this simple interface?
+    # "backout", # Too complicated for this simple interface?
+    # "bisect", # Too complicated for this simple interface?
+    "bookmark (parent revision)...": ['bookmark "%(input)s"', 'Bookmark name:'],
+    "bookmarks": ['', None],
     "branch": ['', None],
     "branches": ['', None],
     # "bundle",
     # "cat",
     # "clone",
     "commit": ['commit -m "%(input)s"', 'Commit message:'],
-    # "commit (this file)": [],
+    "commit (this file)": ['commit "%(file_name)" -m "%(input)s"', "Commit message:"],
     # "copy",
     "diff": ['', None],
-    # "diff (this file)": [],
+    "diff (this file)": ['diff "%(file_name)s"', None],
     # "export",
-    # "forget",
-    # "grep",
-    # "heads",
-    # "help",
-    # "identify",
+    "forget (this file)": ['forget "%(file_name)s"', None],
+    "grep...": ['grep "%(input)s"', 'Pattern (grep):'] ,
+    "heads": ['heads', None],
+    "help": ['', None],
+    "help...": ['help %(input)s', 'Help topic:'],
+    "identify": ['', None],
     # "import",
-    # "incoming",
+    "incoming": ['', None],
     # "init",
-    # "locate",
+    "locate": ['locate "%(input)s"', 'Pattern (locate):'],
     "log": ['', None],
-    # "manifest",
-    # "merge",
-    # "outgoing",
-    # "parents",
-    # "paths",
-    # "pull",
-    # "push",
-    # "recover",
-    # "remove",
-    # "rename",
-    # "resolve",
-    # "revert",
-    # "rollback",
-    # "root",
-    # "showconfig",
+    "log (this file)": ['log "%(file_name)s"', None],
+    "manifest": ['', None],
+    "merge": ['', None],
+    "outgoing": ['', None],
+    "parents": ['', None],
+    "paths": ['', None],
+    "pull": ['', None],
+    "push": ['', None],
+    "push...": ['push "%(input)s"', "Push target:"],
+    "recover": ['', None],
+    "remove (this file)": ['remove "%(input)s"', None],
+    "rename (this file)": ['rename "%(file_name)s" "%(input)s"', "New name:"],
+    "resolve (this file)": ['resolve "%(file_name)s"', None],
+    "revert (this file)": ['revert "%(file_name)s"', None],
+    "rollback": ['', None],
+    "root": ['', None],
+    "showconfig": ['', None],
     "status": ['', None],
-    # "status (this file)": [],
+    "status (this file)": ['status "%(file_name)s"', None],
     "summary": ['', None],
-    # "tag",
-    # "tags",
-    # "tip",
+    "tag...": ['tag "%(input)s"', "Tag name:"],
+    "tags": ['', None],
+    "tip": ['', None],
     # "unbundle",
-    # "update",
-    # "verify",
-    # "version"
+    "update": ['', None],
+    "update...": ['update "%(input)s"', "Branch:"],
+    "verify": ['', None],
+    "version": ['', None]
     }
 
 
@@ -251,46 +256,6 @@ class HgCommand(sublime_plugin.TextCommand):
             self.view.run_command("hg_cmd_line", {"cmd": alt_cmd_name % env})
         else:
             self.view.run_command("hg_cmd_line", {"cmd": hg_cmd})
-
-        #######################################################################
-        # XXX: Move all this mess to a data structure
-        #######################################################################
-        # if hg_cmd == 'commit':
-        #     content = dict(caption='Commit message:',
-        #                     fmtstr="commit -m '%(input)s'")
-        #     self.view.run_command("hg_command_asking", content)
-        #     return
-        # elif hg_cmd == 'commit (this file)':
-        #     if not fn: return
-        #     content = dict(caption='Commit message:',
-        #                     fmtstr="commit '%(fname)s' -m '%(input)s'",
-        #                     fname=fn)
-        #     self.view.run_command("hg_command_asking", content)
-        #     return
-        # elif hg_cmd == 'annotate (this file)':
-        #     if not fn: return
-        #     content = dict(caption='',
-        #                     fmtstr="annotate '%(fname)s'",
-        #                     fname=fn)
-        #     self.view.run_command('hg_command_asking', content)
-        #     return
-        # elif hg_cmd == 'diff (this file)':
-        #     if not fn: return
-        #     content = dict(caption='',
-        #                     fmtstr="diff '%(fname)s'",
-        #                     fname=fn)
-        #     self.view.run_command('hg_command_asking', content)
-        #     return
-        # elif hg_cmd == 'status (this file)':
-        #     if not fn: return
-        #     content = dict(caption='',
-        #                     fmtstr="status '%(fname)s'",
-        #                     fname=fn)
-        #     self.view.run_command('hg_command_asking', content)
-        #     return
-
-        # self.view.run_command("hg_cmd_line", {"cmd": hg_cmd}) 
-        #######################################################################
 
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
