@@ -84,6 +84,10 @@ class HGServer(object):
             self.server.stdin.write(length + data)
             self.server.stdin.flush()
 
+    def write_zero(self):
+        length = struct.pack('>l', 0)
+        self.server.stdin.write(length)
+
     def run_command(self, *args):
         if len(args) == 1 and ' ' in args[0]:
             args = shlex.split(args[0])
@@ -103,12 +107,12 @@ class HGServer(object):
             elif channel == 'r':
                 print "SublimeHg:inf: Return value: %s" % struct.unpack('>l', line)[0]
                 return rv[:-1]
-            else:
-                print "SublimeHg:err: " + line[:-1] + " :: Channel:" + channel
-                #  XXX Ask user for more input instead of blowing up.
-                rv = "Could not complete operation. Was your command complete?"
-                self.shut_down()
-                return rv
+            elif channel in 'IL':
+                # Tell server wo won't send any input.
+                self.write_zero()
+            elif channel == 'e':
+                print "SublimeHg:err: " + line[:-1]
+                rv = line
     
     def get_encoding(self):
         self.write_block('getencoding')
