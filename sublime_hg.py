@@ -182,8 +182,8 @@ SUBLIMEHG_CMDS = {
     # "bundle",
     # "cat",
     # "clone",
-    "commit": ['commit -m "%(input)s"', 'Commit message:'],
-    "commit (this file)": ['commit "%(file_name)" -m "%(input)s"', "Commit message:"],
+    "commit...": ['commit -m "%(input)s"', 'Commit message:'],
+    "commit (this file)...": ['commit "%(file_name)s" -m "%(input)s"', "Commit message:"],
     # "copy",
     "diff": ['', None],
     "diff (this file)": ['diff "%(file_name)s"', None],
@@ -197,7 +197,7 @@ SUBLIMEHG_CMDS = {
     # "import",
     "incoming": ['', None],
     # "init",
-    "locate": ['locate "%(input)s"', 'Pattern (locate):'],
+    "locate...": ['locate "%(input)s"', 'Pattern (locate):'],
     "log": ['', None],
     "log (this file)": ['log "%(file_name)s"', None],
     "manifest": ['', None],
@@ -210,8 +210,8 @@ SUBLIMEHG_CMDS = {
     "push": ['', None],
     "push...": ['push "%(input)s"', "Push target:"],
     "recover": ['', None],
-    "remove (this file)": ['remove "%(input)s"', None],
-    "rename (this file)": ['rename "%(file_name)s" "%(input)s"', "New name:"],
+    "remove (this file)...": ['remove "%(input)s"', None],
+    "rename (this file)...": ['rename "%(file_name)s" "%(input)s"', "New name:"],
     "resolve (this file)": ['resolve "%(file_name)s"', None],
     "revert (this file)": ['revert "%(file_name)s"', None],
     "rollback": ['', None],
@@ -262,7 +262,6 @@ class HgCommand(sublime_plugin.TextCommand):
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
     def run(self, 
     edit, caption='', fmtstr='', **kwargs):
-        print "XXX", caption
         self.fmtstr = fmtstr
         self.content = kwargs
         if caption:
