@@ -19,32 +19,40 @@ class HGServer(object):
     """
     def __init__(self, hg_exe='hg'):
         global running_server
-        if not running_server or running_server.stdin.closed:
-            startupinfo = None
-            if os.name == 'nt':
-                # Hide the child process window on Windows.
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-            self.server = subprocess.Popen(
-                                    [hg_exe, "serve", "--cmdserver", "pipe"],
-                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    startupinfo=startupinfo
-                                    )
-
-            # Is this needed?
-            atexit.register(self.shut_down)
-
-            self.receive_greeting()
-            self.encoding = self.get_encoding()
-
-            running_server = self.server
-            return
-
-        # Reuse existing server.
+        # Reuse existing server or start one.
         self.server = running_server
+        if not running_server:
+            self.start_server(hg_exe)
+
+        if not self.is_server_ok():
+            self.shut_down()
+            self.start_server(hg_exe)
+        
         self.encoding = self.get_encoding()
+        running_server = self.server
+
+    def start_server(self, hg_exe):
+        startupinfo = None
+        if os.name == 'nt':
+            # Hide the child process window on Windows.
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        self.server = subprocess.Popen(
+                                [hg_exe, "serve", "--cmdserver", "pipe"],
+                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                startupinfo=startupinfo
+                                )
+
+        # Is this needed?
+        atexit.register(self.shut_down)
+        self.receive_greeting()
+
+    def is_server_ok(self):
+        cur_dir_ok = os.getcwd().startswith(self.run_command('root'))        
+        return not self.server.stdin.closed and cur_dir_ok
     
     def receive_greeting(self):
         try:
