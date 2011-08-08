@@ -282,4 +282,3 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
     def on_done(self, s):
         self.content['input'] = s
         self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr % self.content})
-
