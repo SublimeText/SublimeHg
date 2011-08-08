@@ -159,7 +159,6 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return
 
         try:
-            # Where's the encoding done here?
             data = hgs.run_command(s.encode(hgs.encoding))
             p = self.view.window().get_output_panel('hgs')
             p_edit = p.begin_edit()
