@@ -1,7 +1,6 @@
 import sublime
 import sublime_plugin
 
-import sys
 import struct
 import subprocess
 import os
@@ -166,7 +165,10 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             p_edit = p.begin_edit()
             p.insert(p_edit, 0, data.decode(hgs.encoding))
             p_edit = p.end_edit(p_edit)
-            p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
+            p.settings().set('gutter', False)
+            if 'diff' in s.lower():
+                p.settings().set('gutter', True)
+                p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
             self.view.window().run_command('show_panel', {'panel': 'output.hgs'})
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
