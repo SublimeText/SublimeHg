@@ -140,7 +140,6 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         self.hg_exe = user_exe or 'hg'
 
     def run(self, edit, cmd=None):
-        self.edit = edit
         if not cmd:
             self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
             return
@@ -164,7 +163,9 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             # Where's the encoding done here?
             data = hgs.run_command(s.encode(hgs.encoding))
             p = self.view.window().get_output_panel('hgs')
-            p.insert(self.edit, 0, data.decode(hgs.encoding))
+            p_edit = p.begin_edit()
+            p.insert(p_edit, 0, data.decode(hgs.encoding))
+            p_edit = p.end_edit(p_edit)
             p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
             self.view.window().run_command('show_panel', {'panel': 'output.hgs'})
         except UnicodeDecodeError, e:
@@ -243,7 +244,6 @@ SUBLIMEHG_CMDS = {
 class HgCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
-        self.edit = edit
         self.view.window().show_quick_panel(sorted(SUBLIMEHG_CMDS.keys()),
                                                                 self.on_done)
     
