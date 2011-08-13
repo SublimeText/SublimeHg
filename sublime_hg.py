@@ -245,14 +245,14 @@ SUBLIMEHG_CMDS = {
 # At some point we'll let the user choose whether to load extensions.
 if True:
     MQ_CMDS = {
-        "qapplied": ['', None],
+        "qapplied": ['qapplied -s', None],
         "qdiff": ['', None],
         "qgoto...": ['qgoto "%(input)s"', "Patch name:"],
         "qheader": ['', None],
         "qheader...": ['qheader "%(input)s"', "Patch name:"],
-        "qnext": ['', None],
+        "qnext": ['qnext -s', None],
         "qpop": ['', None],
-        "qprev": ['', None],
+        "qprev": ['qprev -s', None],
         "qpush": ['', None],
         "qrefresh": ['', None],
         "qrefresh... (EDIT commit message)": ['qrefresh -e', None],
@@ -260,7 +260,7 @@ if True:
         "qseries": ['qseries -s', None],
         "qfinish...": ['qfinish "%(input)s"', 'Patch name:'],
         "qnew...": ['qnew "%(input)s"', 'Patch name:'],
-        "qtop": ['', None],
+        "qtop": ['qtop -s', None],
         "qunapplied": ['', None],
     } 
 
