@@ -257,7 +257,9 @@ if True:
         "qrefresh": ['', None],
         "qrefresh... (EDIT commit message)": ['qrefresh -e', None],
         "qrefresh... (NEW commit message)": ['qrefresh -m "%(input)s"', "Commit message:"],
-        "qseries": ['', None],
+        "qseries": ['qseries -s', None],
+        "qfinish...": ['qfinish "%(input)s"', 'Patch name:'],
+        "qnew...": ['qnew "%(input)s"', 'Patch name:'],
         "qtop": ['', None],
         "qunapplied": ['', None],
     } 
