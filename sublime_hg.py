@@ -242,6 +242,29 @@ SUBLIMEHG_CMDS = {
     }
 
 
+# At some point we'll let the user choose whether to load extensions.
+if True:
+    MQ_CMDS = {
+        "qapplied": ['', None],
+        "qdiff": ['', None],
+        "qgoto...": ['qgoto "%(input)s"', "Patch name:"],
+        "qheader": ['', None],
+        "qheader...": ['qheader "%(input)s"', "Patch name:"],
+        "qnext": ['', None],
+        "qpop": ['', None],
+        "qprev": ['', None],
+        "qpush": ['', None],
+        "qrefresh": ['', None],
+        "qrefresh... (EDIT commit message)": ['qrefresh -e', None],
+        "qrefresh... (NEW commit message)": ['qrefresh -m "%(input)s"', "Commit message:"],
+        "qseries": ['', None],
+        "qtop": ['', None],
+        "qunapplied": ['', None],
+    } 
+
+    SUBLIMEHG_CMDS.update(MQ_CMDS)
+
+
 class HgCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
