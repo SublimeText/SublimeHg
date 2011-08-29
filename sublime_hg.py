@@ -163,7 +163,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             p = self.view.window().get_output_panel('hgs')
             p_edit = p.begin_edit()
             p.insert(p_edit, 0, data.decode(hgs.encoding))
-            p_edit = p.end_edit(p_edit)
+            p.end_edit(p_edit)
             p.settings().set('gutter', False)
             if 'diff' in s.lower():
                 p.settings().set('gutter', True)
