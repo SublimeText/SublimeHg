@@ -16,7 +16,7 @@ Getting Started
 
 - `Download`_ and install SublimeHg. (See `installation instructions`_ for ``.sublime-package`` files.)
 
-.. _Download: https://bitbucket.org/guillermooo/downloads/SublimeHg.sublime-package
+.. _Download: https://bitbucket.org/guillermooo/sublimehg/downloads/SublimeHg.sublime-package
 .. _installation instructions: http://sublimetext.info/docs/en/extensibility/packages.html#installation-of-packages
 
 
