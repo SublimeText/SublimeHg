@@ -9,6 +9,10 @@ import shlex
 
 
 running_server = None
+# Helps find the file where the cmdline should be restored.
+recent_file_name = None
+# Whether the user issued a command from the cmdline; restore cmdline if True.
+is_interactive = False
 
 
 class HGServer(object):
@@ -139,10 +143,26 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         self.hg_exe = user_exe or 'hg'
 
     def run(self, edit, cmd=None):
+        global is_interactive
+        is_interactive = not cmd
         if not cmd:
-            self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
+            ip = self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
+            ip.sel().clear()
+            ip.sel().add(sublime.Region(0, ip.size()))
             return
         self.on_done(cmd)
+    
+    def create_output_sink(self, data, is_diff=False):
+        p = self.view.window().new_file()
+        p.set_name("SublimeHg - Output")
+        p.set_scratch(True)
+        p_edit = p.begin_edit()
+        p.insert(p_edit, 0, data)
+        p.end_edit(p_edit)
+        p.settings().set('gutter', False)
+        if is_diff:
+            p.settings().set('gutter', True)
+            p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
     
     def on_done(self, s):
         old_cd = os.getcwd()
@@ -160,22 +180,30 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
 
         try:
             data = hgs.run_command(s.encode(hgs.encoding))
-            p = self.view.window().get_output_panel('hgs')
-            p_edit = p.begin_edit()
-            p.insert(p_edit, 0, data.decode(hgs.encoding))
-            p_edit = p.end_edit(p_edit)
-            p.settings().set('gutter', False)
-            if 'diff' in s.lower():
-                p.settings().set('gutter', True)
-                p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
-            self.view.window().run_command('show_panel', {'panel': 'output.hgs'})
+            if data:
+                self.create_output_sink(data.decode(hgs.encoding), 'diff' in s.lower())
+                global recent_file_name
+                recent_file_name = self.view.file_name()
+            else:
+                sublime.status_message("SublimeHG - No output.")
+                if is_interactive:
+                    self.view.window().show_input_panel('Hg command:', '', self.on_done, None, None)
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
             print e
         finally:
             os.chdir(old_cd)
-
-
+            
+class CmdLineRestorer(sublime_plugin.EventListener):    
+    def on_activated(self, view):
+        global recent_file_name
+        global is_interactive
+        if not is_interactive: return
+        if not recent_file_name: return
+        if view.file_name() == recent_file_name:
+            recent_file_name = None
+            view.run_command('hg_cmd_line')
+    
 # TODO: Add serve and start in a separate process?
 SUBLIMEHG_CMDS = {
     # Used named tuples
@@ -245,14 +273,14 @@ SUBLIMEHG_CMDS = {
 # At some point we'll let the user choose whether to load extensions.
 if True:
     MQ_CMDS = {
-        "qapplied": ['', None],
+        "qapplied": ['qapplied -s', None],
         "qdiff": ['', None],
         "qgoto...": ['qgoto "%(input)s"', "Patch name:"],
         "qheader": ['', None],
         "qheader...": ['qheader "%(input)s"', "Patch name:"],
-        "qnext": ['', None],
+        "qnext": ['qnext -s', None],
         "qpop": ['', None],
-        "qprev": ['', None],
+        "qprev": ['qprev -s', None],
         "qpush": ['', None],
         "qrefresh": ['', None],
         "qrefresh... (EDIT commit message)": ['qrefresh -e', None],
@@ -260,7 +288,7 @@ if True:
         "qseries": ['qseries -s', None],
         "qfinish...": ['qfinish "%(input)s"', 'Patch name:'],
         "qnew...": ['qnew "%(input)s"', 'Patch name:'],
-        "qtop": ['', None],
+        "qtop": ['qtop -s', None],
         "qunapplied": ['', None],
     } 
 
