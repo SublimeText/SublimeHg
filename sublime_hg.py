@@ -44,10 +44,8 @@ class HGServer(object):
         print "SublimeHg:inf: Sending command '%s' as %s" % (' '.join(args), args)
         try:
             ret = self.server.rawcommand(args)
-            print "SublimeHg:out: " + ret
             return ret
         except hglib.error.CommandError, e:
-            print "SublimeHg:err: " + ' '.join(str(e).split('\n'))
             return str(e)
 
     def shut_down(self):
