@@ -1,11 +1,10 @@
 import sublime
 import sublime_plugin
 
-import struct
-import subprocess
 import os
-import atexit
 import shlex
+
+import hglib
 
 
 running_server = None
@@ -28,76 +27,11 @@ class HGServer(object):
         if not running_server:
             self.start_server(hg_exe)
 
-        if not self.is_server_ok():
-            self.shut_down()
-            self.start_server(hg_exe)
-        
-        self.encoding = self.get_encoding()
         running_server = self.server
 
     def start_server(self, hg_exe):
-        startupinfo = None
-        if os.name == 'nt':
-            # Hide the child process window on Windows.
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-        self.server = subprocess.Popen(
-                                [hg_exe, "serve", "--cmdserver", "pipe"],
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                startupinfo=startupinfo
-                                )
-
-        # Is this needed?
-        atexit.register(self.shut_down)
-        self.receive_greeting()
-
-    def is_server_ok(self):
-        cur_dir_ok = os.getcwd().startswith(self.run_command('root'))        
-        return not self.server.stdin.closed and cur_dir_ok
-    
-    def receive_greeting(self):
-        try:
-            channel, data = self.read_data()
-        except struct.error:
-            err = self.server.stderr.read()
-            raise EnvironmentError(err)
-        except EnvironmentError:
-            err = self.server.stderr.read()
-            raise EnvironmentError(err)
-
-        try:
-            caps, enc = data.split('\n')
-        except ValueError:
-            # Means the server isn't returning the promised data, so the
-            # environment is wrong.
-            print "SublimeHg:err: SublimeHg requires Mercurial>=1.9. (Probable cause.)"
-            raise EnvironmentError("SublimeHg requires Mercurial>=1.9")
-            
-        caps = ', '.join(caps.split()[1:])
-        print "SublimeHg:inf:", "Capabilities:", caps
-        print "SublimeHg:inf: Encoding:", enc.split()[1]
-
-    def read_data(self):
-        channel, length = struct.unpack('>cI', self.server.stdout.read(5))
-        if channel in 'IL':
-            return channel, length
-        
-        return channel, self.server.stdout.read(length)
-    
-    def write_block(self, cmd, *args):
-        self.server.stdin.write(cmd + '\n')
-
-        if args:
-            data = '\0'.join(args)
-            length = struct.pack('>l', len(data))
-            self.server.stdin.write(length + data)
-            self.server.stdin.flush()
-
-    def write_zero(self):
-        length = struct.pack('>l', 0)
-        self.server.stdin.write(length)
+        hglib.HGPATH = hg_exe
+        self.server = hglib.open()
 
     def run_command(self, *args):
         if len(args) == 1 and ' ' in args[0]:
@@ -108,35 +42,21 @@ class HGServer(object):
             args = args[1:]
         
         print "SublimeHg:inf: Sending command '%s' as %s" % (' '.join(args), args)
-        self.write_block('runcommand', *args)
-
-        rv = ''
-        while True:
-            channel, line = self.read_data()
-            if channel == 'o':
-                rv += line
-            elif channel == 'r':
-                print "SublimeHg:inf: Return value: %s" % struct.unpack('>l', line)[0]
-                return rv[:-1]
-            elif channel in 'IL':
-                # Tell server wo won't send any input.
-                self.write_zero()
-            elif channel == 'e':
-                print "SublimeHg:err: " + line[:-1]
-                rv = line
-    
-    def get_encoding(self):
-        self.write_block('getencoding')
-        return self.read_data()[1]
+        try:
+            ret = self.server.rawcommand(args)
+            print "SublimeHg:out: " + ret
+            return ret
+        except hglib.error.CommandError, e:
+            print "SublimeHg:err: " + ' '.join(str(e).split('\n'))
+            return str(e)
 
     def shut_down(self):
         print "SublimeHg:inf: Shutting down HG server..."
-        if not self.server.stdin.closed:
-            self.server.stdin.close()
+        if not self.server.server.stdin.closed:
+            self.server.server.stdin.close()
 
 
 class HgCmdLineCommand(sublime_plugin.TextCommand):
-
     def configure(self):
         s = sublime.load_settings('Global.sublime-settings')
         user_exe = s.get('packages.sublime_hg.hg_exe')
@@ -179,9 +99,9 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return
 
         try:
-            data = hgs.run_command(s.encode(hgs.encoding))
+            data = hgs.run_command(s.encode(hgs.server.encoding))
             if data:
-                self.create_output_sink(data.decode(hgs.encoding), 'diff' in s.lower())
+                self.create_output_sink(data.decode(hgs.server.encoding), 'diff' in s.lower())
                 global recent_file_name
                 recent_file_name = self.view.file_name()
             else:
