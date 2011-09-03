@@ -6,7 +6,9 @@ import shlex
 
 import hglib
 
-VERSION = "11.9.3"
+
+VERSION = '11.9.3'
+
 
 running_server = None
 # Helps find the file where the cmdline should be restored.
