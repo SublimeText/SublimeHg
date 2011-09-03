@@ -1,5 +1,11 @@
-include *.py
+include *.py *.txt
+include *.txt
+include *.sublime-commands
+
 exclude setup.py
+exclude _*.txt
 
 graft Doc
 prune SublimeHg
+prune data
+prune bin
