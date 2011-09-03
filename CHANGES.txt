@@ -1,0 +1,3 @@
+11.9.3
+	- use hglib (by Mercurial team) as client for the command server
+	- shell is restored when originating view is re-focused
