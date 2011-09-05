@@ -58,6 +58,9 @@ class HGServer(object):
 
 
 class HgCmdLineCommand(sublime_plugin.TextCommand):
+    def is_enabled(self):
+        return self.view.file_name()
+
     def configure(self):
         s = sublime.load_settings('Global.sublime-settings')
         user_exe = s.get('packages.sublime_hg.hg_exe')
@@ -217,6 +220,8 @@ if True:
 
 
 class HgCommand(sublime_plugin.TextCommand):
+    def is_enabled(self):
+        return self.view.file_name()
 
     def run(self, edit):
         self.view.window().show_quick_panel(sorted(SUBLIMEHG_CMDS.keys()),
@@ -231,13 +236,11 @@ class HgCommand(sublime_plugin.TextCommand):
         fn = self.view.file_name()
         env = {"file_name": fn}
 
-        if alt_cmd_name:
-            
+        if alt_cmd_name:            
             if extra_prompt:
                 env.update({"caption": extra_prompt, "fmtstr": alt_cmd_name,})
                 self.view.run_command("hg_command_asking", env)
                 return
-
             self.view.run_command("hg_cmd_line", {"cmd": alt_cmd_name % env})
         else:
             self.view.run_command("hg_cmd_line", {"cmd": hg_cmd})
