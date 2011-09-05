@@ -14,8 +14,8 @@ def init(dest=None, ssh=None, remotecmd=None, insecure=False,
                            insecure=insecure)
 
     args.insert(0, HGPATH)
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            close_fds=util.closefds)
+    proc = util.popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             close_fds=util.closefds)
 
     out, err = proc.communicate()
     if proc.returncode:

@@ -23,16 +23,9 @@ class hgclient(object):
         if encoding:
             env['HGENCODING'] = encoding
 
-        startupinfo = None
-        if os.name == 'nt':
-            # Hide the child process window on Windows.
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-        self.server = subprocess.Popen(args, stdin=subprocess.PIPE,
+        self.server = util.popen(args, stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE, env=env,
-                                       close_fds=util.closefds,
-                                       startupinfo=startupinfo)
+                                       close_fds=util.closefds)
 
         self._readhello()
         self._version = None

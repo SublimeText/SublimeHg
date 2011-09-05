@@ -1,4 +1,6 @@
 import itertools, cStringIO, error, os
+import subprocess
+
 
 closefds = os.name == 'posix'
 
@@ -132,3 +134,14 @@ class reterrorhandler(object):
     def __nonzero__(self):
         """ Returns True if the return code was 0, False otherwise """
         return self.ret == 0
+
+def popen(args, **kwargs):
+    """A wrapper around subprocess.Popen to make sure that console windows are
+    hidden on Windows."""
+    if 'startupinfo' not in kwargs and os.name == 'nt':
+        # Hide the child process window on Windows.
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        kwargs['startupinfo'] = startupinfo
+    
+    return subprocess.Popen(args, **kwargs)
