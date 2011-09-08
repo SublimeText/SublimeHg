@@ -97,6 +97,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             ip = self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
             ip.sel().clear()
             ip.sel().add(sublime.Region(0, ip.size()))
+            ip.set_syntax_file('Packages/SublimeHg/SublimeHg Command Line.tmLanguage')
             return
         self.on_done(cmd)
     
@@ -301,6 +302,30 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
     def on_done(self, s):
         self.content['input'] = s
         self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr % self.content})
+
+
+# XXX not ideal; missing commands
+COMPLETIONS = sorted(SUBLIMEHG_CMDS.keys() + ['!h', '!mkh'])
+COMPLETIONS = [x.replace('.', '') for x in COMPLETIONS if ' ' not in x]
+
+class HgCompletionsProvider(sublime_plugin.EventListener):
+    LAST_PREFIX = ''
+    CACHED_COMPLETIONS = []
+    CACHED_COMPLETION_PREFIXES = []
+    def on_query_completions(self, view, prefix, locations):
+        if view.score_selector(0, 'text.sublimehgcmdline') == 0:
+            print view.substr(sublime.Region(0, view.size()))
+            print view.scope_name(0)
+            return []
+        
+        if prefix and prefix in self.CACHED_COMPLETION_PREFIXES:
+            return self.CACHED_COMPLETIONS
+
+        compls = [x for x in COMPLETIONS if x.startswith(prefix)]
+        self.LAST_PREFIX = prefix
+        self.CACHED_COMPLETION_PREFIXES = [prefix] + compls
+        self.CACHED_COMPLETIONS = zip([prefix] + compls, compls + [prefix])
+        return self.CACHED_COMPLETIONS
 
 
 # load history if it exists
