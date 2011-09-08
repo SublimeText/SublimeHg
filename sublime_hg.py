@@ -317,6 +317,9 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
         if view.score_selector(0, 'text.sublimehgcmdline') == 0:
             return []
         
+        if view.substr(sublime.Region(0, view.size())) != prefix:
+            return []
+        
         if prefix and prefix in self.CACHED_COMPLETION_PREFIXES:
             return self.CACHED_COMPLETIONS
 
