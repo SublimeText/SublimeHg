@@ -306,7 +306,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
 
 # XXX not ideal; missing commands
 COMPLETIONS = sorted(SUBLIMEHG_CMDS.keys() + ['!h', '!mkh'])
-COMPLETIONS = [x.replace('.', '') for x in COMPLETIONS if ' ' not in x]
+COMPLETIONS = list(set([x.replace('.', '') for x in COMPLETIONS if ' ' not in x]))
 
 class HgCompletionsProvider(sublime_plugin.EventListener):
     LAST_PREFIX = ''
@@ -314,8 +314,6 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
     CACHED_COMPLETION_PREFIXES = []
     def on_query_completions(self, view, prefix, locations):
         if view.score_selector(0, 'text.sublimehgcmdline') == 0:
-            print view.substr(sublime.Region(0, view.size()))
-            print view.scope_name(0)
             return []
         
         if prefix and prefix in self.CACHED_COMPLETION_PREFIXES:
