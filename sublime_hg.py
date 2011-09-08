@@ -7,14 +7,38 @@ import shlex
 import hglib
 
 
-VERSION = '11.9.3'
+VERSION = '11.9.8'
 
+HISTORY_MAX_LEN = 50
+PATH_TO_HISTORY = os.path.join(sublime.packages_path(), 'SublimeHg/history.txt')
+
+g_history = []
 
 running_server = None
 # Helps find the file where the cmdline should be restored.
 recent_file_name = None
 # Whether the user issued a command from the cmdline; restore cmdline if True.
 is_interactive = False
+
+def load_history():
+    global g_history
+    if os.path.exists(PATH_TO_HISTORY):
+        with open(PATH_TO_HISTORY) as fh:
+            g_history = [ln[:-1] for ln in fh]
+
+
+def make_history():
+    with open(PATH_TO_HISTORY, 'w') as fh:
+        fh.writelines([v + '\n' for v in g_history])
+
+
+def push_history(cmd):
+    global g_history
+    if cmd not in g_history:
+        g_history.append(cmd)
+
+    if len(g_history) > HISTORY_MAX_LEN:
+        del g_history[0]
 
 
 class HGServer(object):
@@ -68,8 +92,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, cmd=None):
         global is_interactive
-        is_interactive = not cmd
         if not cmd:
+            is_interactive = True
             ip = self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
             ip.sel().clear()
             ip.sel().add(sublime.Region(0, ip.size()))
@@ -88,7 +112,23 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             p.settings().set('gutter', True)
             p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
     
+    def process_intrinsic_cmds(self, cmd):
+        if cmd == '!h':
+            self.view.window().show_quick_panel(g_history, self.repeat_history)
+            return True
+        elif cmd == '!mkh':
+            make_history()
+            return True
+        
+    def repeat_history(self, s):
+        if s == -1: return
+        # sublime.status_message("XXX " + g_history[s])
+        self.view.run_command('hg_cmd_line', {'cmd': g_history[s]})
+    
     def on_done(self, s):
+        # the user doesn't want anything to happen now
+        if self.process_intrinsic_cmds(s): return
+
         old_cd = os.getcwd()
         os.chdir(os.path.dirname(self.view.file_name()))
 
@@ -117,6 +157,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             print e
         finally:
             os.chdir(old_cd)
+        
+        push_history(s)
             
 class CmdLineRestorer(sublime_plugin.EventListener):    
     def on_activated(self, view):
@@ -259,3 +301,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
     def on_done(self, s):
         self.content['input'] = s
         self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr % self.content})
+
+
+# load history if it exists
+load_history()
