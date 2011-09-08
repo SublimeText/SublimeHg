@@ -14,8 +14,7 @@ Requirements
 Getting Started
 ===============
 
-- `Download`_ and install SublimeHg. (See `installation instructions`_ for
-   ``.sublime-package`` files.)
+- `Download`_ and install SublimeHg. (See `installation instructions`_ for ``.sublime-package`` files.)
 
 .. _Download: https://bitbucket.org/guillermooo/sublimehg/downloads/SublimeHg.sublime-package
 .. _installation instructions: http://sublimetext.info/docs/en/extensibility/packages.html#installation-of-packages
@@ -70,4 +69,4 @@ Open the SublimeHg command line and type:
 Tab Completion
 --------------
 
-The command line will complete top level commands when you press :kbd:`Tab`.
+The command line will complete top level commands when you press ``Tab``.
