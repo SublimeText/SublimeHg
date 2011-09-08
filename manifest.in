@@ -1,11 +1,9 @@
 include *.py *.txt
-include *.txt
-include *.sublime-commands
+include *.sublime-* *.tmLanguage
 
 exclude setup.py
 exclude _*.txt
 
 graft Doc
-prune SublimeHg
+prune dist
 prune data
-prune bin

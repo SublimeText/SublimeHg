@@ -55,3 +55,19 @@ Normally, you will follow these steps to use SublimeHg:
 
 Alternatively, you can assign the ``hg_command_line`` and ``hg`` commands their
 own key bindings.
+
+History
+-------
+
+Open the SublimeHg command line and type:
+
+``!h``
+   Displays history.
+
+``!mkh``
+   Persists current history between sessions.
+
+Tab Completion
+--------------
+
+The command line will complete top level commands when you press :kbd:`Tab`.
