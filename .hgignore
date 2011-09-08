@@ -8,6 +8,7 @@ syntax: glob
 *.sublime-project
 
 _*.txt
+history.txt
 
 MANIFEST
 
