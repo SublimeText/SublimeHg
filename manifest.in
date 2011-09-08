@@ -3,6 +3,7 @@ include *.sublime-* *.tmLanguage
 
 exclude setup.py
 exclude _*.txt
+exclude *.cache
 
 graft Doc
 prune dist
