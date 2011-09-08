@@ -97,7 +97,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             ip = self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
             ip.sel().clear()
             ip.sel().add(sublime.Region(0, ip.size()))
-            ip.set_syntax_file('Packages/SublimeHg/SublimeHg Command Line.tmLanguage')
+            ip.set_syntax_file('Packages/SublimeHg/Support/SublimeHg Command Line.tmLanguage')
             return
         self.on_done(cmd)
     
@@ -153,7 +153,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
                 sublime.status_message("SublimeHG - No output.")
                 if is_interactive:
                     ip = self.view.window().show_input_panel('Hg command:', '', self.on_done, None, None)
-                    ip.set_syntax_file('Packages/SublimeHg/SublimeHg Command Line.tmLanguage')
+                    ip.set_syntax_file('Packages/SublimeHg/Support/SublimeHg Command Line.tmLanguage')
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
             print e
