@@ -308,8 +308,8 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
 COMPLETIONS = sorted(SUBLIMEHG_CMDS.keys() + ['!h', '!mkh'])
 COMPLETIONS = list(set([x.replace('.', '') for x in COMPLETIONS if ' ' not in x]))
 
+
 class HgCompletionsProvider(sublime_plugin.EventListener):
-    LAST_PREFIX = ''
     CACHED_COMPLETIONS = []
     CACHED_COMPLETION_PREFIXES = []
     def on_query_completions(self, view, prefix, locations):
@@ -320,7 +320,6 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
             return self.CACHED_COMPLETIONS
 
         compls = [x for x in COMPLETIONS if x.startswith(prefix)]
-        self.LAST_PREFIX = prefix
         self.CACHED_COMPLETION_PREFIXES = [prefix] + compls
         self.CACHED_COMPLETIONS = zip([prefix] + compls, compls + [prefix])
         return self.CACHED_COMPLETIONS
