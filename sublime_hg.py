@@ -20,6 +20,7 @@ recent_file_name = None
 # Whether the user issued a command from the cmdline; restore cmdline if True.
 is_interactive = False
 
+
 def load_history():
     global g_history
     if os.path.exists(PATH_TO_HISTORY):
@@ -27,9 +28,10 @@ def load_history():
             g_history = [ln[:-1] for ln in fh]
 
 
-def make_history():
-    with open(PATH_TO_HISTORY, 'w') as fh:
-        fh.writelines([v + '\n' for v in g_history])
+def make_history(append=False):
+    mode = 'w' if not append else 'a'
+    with open(PATH_TO_HISTORY, mode) as fh:
+        fh.writelines('\n'.join(g_history))
 
 
 def push_history(cmd):
@@ -114,11 +116,12 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
     
     def process_intrinsic_cmds(self, cmd):
+        cmd = cmd.strip()
         if cmd == '!h':
             self.view.window().show_quick_panel(g_history, self.repeat_history)
             return True
-        elif cmd == '!mkh':
-            make_history()
+        elif cmd.startswith('!mkh'):
+            make_history(append=(cmd.endswith('-a')))
             return True
         
     def repeat_history(self, s):
