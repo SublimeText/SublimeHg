@@ -9,38 +9,43 @@ import hglib
 
 VERSION = '11.9.8'
 
+###############################################################################
+# Globals
+#------------------------------------------------------------------------------
 HISTORY_MAX_LEN = 50
 PATH_TO_HISTORY = os.path.join(sublime.packages_path(), 'SublimeHg/history.txt')
 
-g_history = []
-
+# Holds the HISTORY_MAX_LEN most recently used commands from the cmdline.
+history = []
+# Holds the existing server so it doesn't have to be reloaded.
 running_server = None
 # Helps find the file where the cmdline should be restored.
 recent_file_name = None
 # Whether the user issued a command from the cmdline; restore cmdline if True.
 is_interactive = False
+#==============================================================================
 
 
 def load_history():
-    global g_history
+    global history
     if os.path.exists(PATH_TO_HISTORY):
         with open(PATH_TO_HISTORY) as fh:
-            g_history = [ln[:-1] for ln in fh]
+            history = [ln[:-1] for ln in fh]
 
 
 def make_history(append=False):
     mode = 'w' if not append else 'a'
     with open(PATH_TO_HISTORY, mode) as fh:
-        fh.writelines('\n'.join(g_history))
+        fh.writelines('\n'.join(history))
 
 
 def push_history(cmd):
-    global g_history
-    if cmd not in g_history:
-        g_history.append(cmd)
+    global history
+    if cmd not in history:
+        history.append(cmd)
 
-    if len(g_history) > HISTORY_MAX_LEN:
-        del g_history[0]
+    if len(history) > HISTORY_MAX_LEN:
+        del history[0]
 
 
 class HGServer(object):
@@ -59,10 +64,13 @@ class HGServer(object):
         running_server = self.server
 
     def start_server(self, hg_exe):
+        # By default, hglib uses 'hg'. User might need to change that on
+        # Windows, for example.
         hglib.HGPATH = hg_exe
         self.server = hglib.open()
 
     def run_command(self, *args):
+        # XXX We should probably use hglib's own utility funcs.
         if len(args) == 1 and ' ' in args[0]:
             args = shlex.split(args[0])
 
@@ -75,6 +83,8 @@ class HGServer(object):
             ret = self.server.rawcommand(args)
             return ret
         except hglib.error.CommandError, e:
+            print "SublimeHg:err: An error occurred with hglib. More info " \
+                  "in ST2's console."
             return str(e)
 
     def shut_down(self):
@@ -89,18 +99,25 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
 
     def configure(self):
         s = sublime.load_settings('Global.sublime-settings')
-        user_exe = s.get('packages.sublime_hg.hg_exe')
-        self.hg_exe = user_exe or 'hg'
+        self.hg_exe = s.get('packages.sublime_hg.hg_exe') or 'hg'
 
     def run(self, edit, cmd=None):
         global is_interactive
         if not cmd:
             is_interactive = True
+
             ip = self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
             ip.sel().clear()
             ip.sel().add(sublime.Region(0, ip.size()))
             ip.set_syntax_file('Packages/SublimeHg/Support/SublimeHg Command Line.tmLanguage')
+            # XXX If Vintage's on, the caret might look weird.
+            # XXX This doesn't fix it correctly.
+            ip.settings().set('command_mode', False)
+            ip.settings().set('inverse_caret_state', False)
+            ip.erase_status('mode')
             return
+
+        is_interactive = False
         self.on_done(cmd)
     
     def create_output_sink(self, data, is_diff=False):
@@ -118,7 +135,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
     def process_intrinsic_cmds(self, cmd):
         cmd = cmd.strip()
         if cmd == '!h':
-            self.view.window().show_quick_panel(g_history, self.repeat_history)
+            self.view.window().show_quick_panel(history, self.repeat_history)
             return True
         elif cmd.startswith('!mkh'):
             make_history(append=(cmd.endswith('-a')))
@@ -126,8 +143,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         
     def repeat_history(self, s):
         if s == -1: return
-        # sublime.status_message("XXX " + g_history[s])
-        self.view.run_command('hg_cmd_line', {'cmd': g_history[s]})
+        self.view.run_command('hg_cmd_line', {'cmd': history[s]})
     
     def on_done(self, s):
         # the user doesn't want anything to happen now
@@ -160,6 +176,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
             print e
+            return
         finally:
             os.chdir(old_cd)
         
@@ -316,10 +333,12 @@ COMPLETIONS = list(set([x.replace('.', '') for x in COMPLETIONS if ' ' not in x]
 class HgCompletionsProvider(sublime_plugin.EventListener):
     CACHED_COMPLETIONS = []
     CACHED_COMPLETION_PREFIXES = []
+
     def on_query_completions(self, view, prefix, locations):
         if view.score_selector(0, 'text.sublimehgcmdline') == 0:
             return []
         
+        # Only complete top level commands.
         if view.substr(sublime.Region(0, view.size())) != prefix:
             return []
         
@@ -332,5 +351,5 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
         return self.CACHED_COMPLETIONS
 
 
-# load history if it exists
+# Load history if it exists
 load_history()

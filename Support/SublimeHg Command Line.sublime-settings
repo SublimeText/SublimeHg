@@ -1,4 +1,5 @@
 {
 	"word_separators": "./\\()\"'-:,.;<>~@#$%^&*|+=[]{}`~?",
-	"gutter": false
+	"gutter": false,
+	"vintage_start_in_command_mode": false
 }
