@@ -83,8 +83,7 @@ class HGServer(object):
             ret = self.server.rawcommand(args)
             return ret
         except hglib.error.CommandError, e:
-            print "SublimeHg:err: An error occurred with hglib. More info " \
-                  "in ST2's console."
+            print "SublimeHg:err: " + str(e)
             return str(e)
 
     def shut_down(self):
