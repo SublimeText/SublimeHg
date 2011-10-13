@@ -3,17 +3,25 @@ import sublime_plugin
 
 import os
 import shlex
+import threading
+import functools
 
 import hglib
 
+# from commands import HG_COMMANDS
+from hg_commands import HG_COMMANDS
 
-VERSION = '11.9.10'
+
+VERSION = '11.10.14'
 
 ###############################################################################
 # Globals
 #------------------------------------------------------------------------------
 HISTORY_MAX_LEN = 50
 PATH_TO_HISTORY = os.path.join(sublime.packages_path(), 'SublimeHg/history.txt')
+
+work_completed = threading.Event()
+work_completed.set()
 
 # Holds the HISTORY_MAX_LEN most recently used commands from the cmdline.
 history = []
@@ -92,6 +100,48 @@ class HGServer(object):
             self.server.server.stdin.close()
 
 
+class CommandRunnerWorker(threading.Thread):
+    def __init__(self, hgs, s, view):
+        threading.Thread.__init__(self)
+        self.hgs=hgs
+        self.s = s
+        self.view= view
+
+    def on_main_thread(self, data):
+        if data:
+            self.create_output_sink(data.decode(self.hgs.server.encoding), 'diff' in self.s.lower())
+            global recent_file_name
+            recent_file_name = self.view.file_name()
+        else:
+            sublime.status_message("SublimeHG - No output.")
+        push_history(self.s)
+
+    def run(self):
+        global work_completed
+        work_completed.clear()
+        try:
+            data = self.hgs.run_command(self.s.encode(self.hgs.server.encoding))
+            sublime.set_timeout(functools.partial(self.on_main_thread, data), 0)
+        except UnicodeDecodeError, e:
+            print "Oops (funny characters!)..."
+            print e
+            return
+        finally:
+            work_completed.set()
+
+    def create_output_sink(self, data, is_diff=False):
+        p = self.view.window().new_file()
+        p.set_name("SublimeHg - Output")
+        p.set_scratch(True)
+        p_edit = p.begin_edit()
+        p.insert(p_edit, 0, data)
+        p.end_edit(p_edit)
+        p.settings().set('gutter', False)
+        if is_diff:
+            p.settings().set('gutter', True)
+            p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
+
+
 class HgCmdLineCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         return self.view.file_name()
@@ -119,18 +169,6 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         is_interactive = False
         self.on_done(cmd)
     
-    def create_output_sink(self, data, is_diff=False):
-        p = self.view.window().new_file()
-        p.set_name("SublimeHg - Output")
-        p.set_scratch(True)
-        p_edit = p.begin_edit()
-        p.insert(p_edit, 0, data)
-        p.end_edit(p_edit)
-        p.settings().set('gutter', False)
-        if is_diff:
-            p.settings().set('gutter', True)
-            p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
-    
     def process_intrinsic_cmds(self, cmd):
         cmd = cmd.strip()
         if cmd == '!h':
@@ -146,10 +184,10 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
     
     def on_done(self, s):
         # the user doesn't want anything to happen now
+        if not work_completed.is_set():
+            sublime.status_message("Processing other request. Try again later.")
+            return
         if self.process_intrinsic_cmds(s): return
-
-        old_cd = os.getcwd()
-        os.chdir(os.path.dirname(self.view.file_name()))
 
         if not hasattr(self, 'hg_exe'):
             self.configure()
@@ -158,29 +196,11 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             hgs = HGServer(self.hg_exe)
         except EnvironmentError, e:
             sublime.status_message("SublimeHg:err:" + str(e))
-            os.chdir(old_cd)
             return
 
-        try:
-            data = hgs.run_command(s.encode(hgs.server.encoding))
-            if data:
-                self.create_output_sink(data.decode(hgs.server.encoding), 'diff' in s.lower())
-                global recent_file_name
-                recent_file_name = self.view.file_name()
-            else:
-                sublime.status_message("SublimeHG - No output.")
-                if is_interactive:
-                    ip = self.view.window().show_input_panel('Hg command:', '', self.on_done, None, None)
-                    ip.set_syntax_file('Packages/SublimeHg/Support/SublimeHg Command Line.tmLanguage')
-        except UnicodeDecodeError, e:
-            print "Oops (funny characters!)..."
-            print e
-            return
-        finally:
-            os.chdir(old_cd)
-        
-        push_history(s)
+        CommandRunnerWorker(hgs, s, self.view).start()
             
+
 class CmdLineRestorer(sublime_plugin.EventListener):    
     def on_activated(self, view):
         global recent_file_name
@@ -191,110 +211,21 @@ class CmdLineRestorer(sublime_plugin.EventListener):
             recent_file_name = None
             view.run_command('hg_cmd_line')
     
-# TODO: Add serve and start in a separate process?
-SUBLIMEHG_CMDS = {
-    # Used named tuples
-    "add": ['', None],
-    "add (this file)": ['add "%(file_name)s"', None],
-    "addremove": ['', None],
-    "annotate (this file)": ['annotate "%(file_name)s"', None],
-    # "archive", # Too complicated for this simple interface?
-    # "backout", # Too complicated for this simple interface?
-    # "bisect", # Too complicated for this simple interface?
-    "bookmark (parent revision)...": ['bookmark "%(input)s"', 'Bookmark name:'],
-    "bookmarks": ['', None],
-    "branch": ['', None],
-    "branches": ['', None],
-    # "bundle",
-    # "cat",
-    # "clone",
-    "commit...": ['commit -m "%(input)s"', 'Commit message:'],
-    "commit (this file)...": ['commit "%(file_name)s" -m "%(input)s"', "Commit message:"],
-    # "copy",
-    "diff": ['', None],
-    "diff (this file)": ['diff "%(file_name)s"', None],
-    # "export",
-    "forget (this file)": ['forget "%(file_name)s"', None],
-    "grep...": ['grep "%(input)s"', 'Pattern (grep):'] ,
-    "heads": ['heads', None],
-    "help": ['', None],
-    "help...": ['help %(input)s', 'Help topic:'],
-    "identify": ['', None],
-    # "import",
-    "incoming": ['', None],
-    # "init",
-    "locate...": ['locate "%(input)s"', 'Pattern (locate):'],
-    "log": ['', None],
-    "log (this file)": ['log "%(file_name)s"', None],
-    "manifest": ['', None],
-    "merge": ['', None],
-    "merge...": ['merge "%(input)s"', "Revision to merge with:"],
-    "outgoing": ['', None],
-    "parents": ['', None],
-    "paths": ['', None],
-    "pull": ['', None],
-    "push": ['', None],
-    "push...": ['push "%(input)s"', "Push target:"],
-    "recover": ['', None],
-    "remove (this file)...": ['remove "%(input)s"', None],
-    "rename (this file)...": ['rename "%(file_name)s" "%(input)s"', "New name:"],
-    "resolve (this file)": ['resolve "%(file_name)s"', None],
-    "revert (this file)": ['revert "%(file_name)s"', None],
-    "rollback": ['', None],
-    "root": ['', None],
-    "showconfig": ['', None],
-    "status": ['', None],
-    "status (this file)": ['status "%(file_name)s"', None],
-    "summary": ['', None],
-    "tag...": ['tag "%(input)s"', "Tag name:"],
-    "tags": ['', None],
-    "tip": ['', None],
-    # "unbundle",
-    "update": ['', None],
-    "update...": ['update "%(input)s"', "Branch:"],
-    "verify": ['', None],
-    "version": ['', None]
-    }
-
-
-# At some point we'll let the user choose whether to load extensions.
-if True:
-    MQ_CMDS = {
-        "qapplied": ['qapplied -s', None],
-        "qdiff": ['', None],
-        "qgoto...": ['qgoto "%(input)s"', "Patch name:"],
-        "qheader": ['', None],
-        "qheader...": ['qheader "%(input)s"', "Patch name:"],
-        "qnext": ['qnext -s', None],
-        "qpop": ['', None],
-        "qprev": ['qprev -s', None],
-        "qpush": ['', None],
-        "qrefresh": ['', None],
-        "qrefresh... (EDIT commit message)": ['qrefresh -e', None],
-        "qrefresh... (NEW commit message)": ['qrefresh -m "%(input)s"', "Commit message:"],
-        "qseries": ['qseries -s', None],
-        "qfinish...": ['qfinish "%(input)s"', 'Patch name:'],
-        "qnew...": ['qnew "%(input)s"', 'Patch name:'],
-        "qtop": ['qtop -s', None],
-        "qunapplied": ['', None],
-    } 
-
-    SUBLIMEHG_CMDS.update(MQ_CMDS)
-
 
 class HgCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         return self.view.file_name()
 
     def run(self, edit):
-        self.view.window().show_quick_panel(sorted(SUBLIMEHG_CMDS.keys()),
+        self.view.window().show_quick_panel(sorted(HG_COMMANDS.keys()),
                                                                 self.on_done)
     
     def on_done(self, s):
         if s == -1: return
 
-        hg_cmd = sorted(SUBLIMEHG_CMDS.keys())[s]
-        alt_cmd_name, extra_prompt = SUBLIMEHG_CMDS[hg_cmd]
+        hg_cmd = sorted(HG_COMMANDS.keys())[s]
+        alt_cmd_name, extra_prompt = HG_COMMANDS[hg_cmd].format_str, \
+                                        HG_COMMANDS[hg_cmd].prompt
 
         fn = self.view.file_name()
         env = {"file_name": fn}
@@ -325,7 +256,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
 
 
 # XXX not ideal; missing commands
-COMPLETIONS = sorted(SUBLIMEHG_CMDS.keys() + ['!h', '!mkh'])
+COMPLETIONS = sorted(HG_COMMANDS.keys() + ['!h', '!mkh'])
 COMPLETIONS = list(set([x.replace('.', '') for x in COMPLETIONS if ' ' not in x]))
 
 
