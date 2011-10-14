@@ -34,11 +34,17 @@ HG_COMMANDS = {
                     enabled=True,
                     syntax_file='',
                     ),
+    'annotate': cmd_data(
+                    format_str='',
+                    prompt='',
+                    enabled=False,
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.tmLanguage',
+                    ),
     'annotate (this file)': cmd_data(
                     format_str='annotate "%(file_name)s"',
                     prompt='',
                     enabled=True,
-                    syntax_file='',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.tmLanguage',
                     ),
     'bookmark (parent revision)': cmd_data(
                     format_str='bookmark "%(input)s"',
