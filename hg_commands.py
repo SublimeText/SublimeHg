@@ -164,7 +164,7 @@ HG_COMMANDS = {
                     format_str='',
                     prompt='',
                     enabled=True,
-                    syntax_file='',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.tmLanguage',
                     ),
     'parents': cmd_data(
                     format_str='',

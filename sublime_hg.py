@@ -102,9 +102,9 @@ class HGServer(object):
 class CommandRunnerWorker(threading.Thread):
     def __init__(self, hgs, s, view):
         threading.Thread.__init__(self)
-        self.hgs=hgs
+        self.hgs = hgs
         self.s = s
-        self.view= view
+        self.view = view
         self.command_data = None
         # we don't get the original command data, but its close relative
         canonical_name = s if ' ' not in s else s.split(' ')[0]
