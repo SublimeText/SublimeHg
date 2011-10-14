@@ -106,9 +106,11 @@ class CommandRunnerWorker(threading.Thread):
         self.s = s
         self.view= view
         self.command_data = None
-        cmd = find_command(s)
+        # we don't get the original command data, but its close relative
+        canonical_name = s if ' ' not in s else s.split(' ')[0]
+        cmd = find_command(canonical_name)
         if cmd:
-            self.command_data = HG_COMMANDS[s]
+            self.command_data = HG_COMMANDS[canonical_name]
 
     def on_main_thread(self, data):
         if data:
