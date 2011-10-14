@@ -5,7 +5,7 @@ syntax: glob
 *.pyc
 
 *.cache
-*.sublime-project
+*.sublime-workspace
 
 _*.txt
 history.txt

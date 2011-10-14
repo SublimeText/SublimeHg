@@ -9,7 +9,7 @@ import functools
 import hglib
 
 # from commands import HG_COMMANDS
-from hg_commands import HG_COMMANDS
+from hg_commands import HG_COMMANDS, HG_COMMANDS_LIST, find_command
 
 
 VERSION = '11.10.14'
@@ -106,10 +106,14 @@ class CommandRunnerWorker(threading.Thread):
         self.hgs=hgs
         self.s = s
         self.view= view
+        self.command_data = None
+        cmd = find_command(s)
+        if cmd:
+            self.command_data = HG_COMMANDS[s]
 
     def on_main_thread(self, data):
         if data:
-            self.create_output_sink(data.decode(self.hgs.server.encoding), 'diff' in self.s.lower())
+            self.create_output_sink(data.decode(self.hgs.server.encoding))
             global recent_file_name
             recent_file_name = self.view.file_name()
         else:
@@ -129,7 +133,7 @@ class CommandRunnerWorker(threading.Thread):
         finally:
             work_completed.set()
 
-    def create_output_sink(self, data, is_diff=False):
+    def create_output_sink(self, data):
         p = self.view.window().new_file()
         p.set_name("SublimeHg - Output")
         p.set_scratch(True)
@@ -137,9 +141,9 @@ class CommandRunnerWorker(threading.Thread):
         p.insert(p_edit, 0, data)
         p.end_edit(p_edit)
         p.settings().set('gutter', False)
-        if is_diff:
+        if self.command_data and self.command_data.syntax_file:
             p.settings().set('gutter', True)
-            p.set_syntax_file('Packages/Diff/Diff.tmLanguage')
+            p.set_syntax_file(self.command_data.syntax_file)
 
 
 class HgCmdLineCommand(sublime_plugin.TextCommand):
@@ -256,8 +260,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
 
 
 # XXX not ideal; missing commands
-COMPLETIONS = sorted(HG_COMMANDS.keys() + ['!h', '!mkh'])
-COMPLETIONS = list(set([x.replace('.', '') for x in COMPLETIONS if ' ' not in x]))
+COMPLETIONS = HG_COMMANDS_LIST + ['!h', '!mkh']
 
 
 class HgCompletionsProvider(sublime_plugin.EventListener):
