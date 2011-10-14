@@ -8,11 +8,10 @@ import functools
 
 import hglib
 
-# from commands import HG_COMMANDS
 from hg_commands import HG_COMMANDS, HG_COMMANDS_LIST, find_command
 
 
-VERSION = '11.10.14'
+VERSION = '11.10.15'
 
 ###############################################################################
 # Globals
