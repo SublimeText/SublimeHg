@@ -242,13 +242,13 @@ HG_COMMANDS = {
                     format_str='',
                     prompt='',
                     enabled=True,
-                    syntax_file='',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.tmLanguage',
                     ),
     "status (this file)": cmd_data(
                     format_str='status "%(file_name)s"',
                     prompt='',
                     enabled=True,
-                    syntax_file='',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.tmLanguage',
                     ),
     "summary": cmd_data(
                     format_str='',
