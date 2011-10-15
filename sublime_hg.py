@@ -8,7 +8,7 @@ import functools
 
 import hglib
 
-from hg_commands import HG_COMMANDS, HG_COMMANDS_LIST, find_command
+from hg_commands import HG_COMMANDS, HG_COMMANDS_LIST
 
 
 VERSION = '11.10.15'
@@ -109,18 +109,15 @@ class HGServer(object):
 
 
 class CommandRunnerWorker(threading.Thread):
-    def __init__(self, hgs, s, view, fname):
+    def __init__(self, hgs, s, view, fname, display_name):
         threading.Thread.__init__(self)
         self.hgs = hgs
         self.s = s
         self.view = view
         self.command_data = None
         self.fname = fname
-        # we don't get the original command data, but its close relative
-        canonical_name = s if ' ' not in s else s.split(' ')[0]
-        cmd = find_command(canonical_name)
-        if cmd:
-            self.command_data = HG_COMMANDS[canonical_name]
+        print "XXX", display_name
+        self.command_data = HG_COMMANDS.get(display_name, None)
 
     def on_main_thread(self, data):
         if data:
@@ -169,7 +166,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         s = sublime.load_settings('Global.sublime-settings')
         self.hg_exe = s.get('packages.sublime_hg.hg_exe') or 'hg'
 
-    def run(self, edit, cmd=None):
+    def run(self, edit, cmd=None, display_name=None):
+        self.display_name = display_name
         global is_interactive
         if not cmd:
             is_interactive = True
@@ -217,7 +215,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             sublime.status_message("SublimeHg:err:" + str(e))
             return
 
-        CommandRunnerWorker(hgs, s, self.view, self.view.file_name()).start()
+        CommandRunnerWorker(hgs, s, self.view, self.view.file_name(), self.display_name).start()
             
 
 class CmdLineRestorer(sublime_plugin.EventListener):    
@@ -254,9 +252,9 @@ class HgCommand(sublime_plugin.TextCommand):
                 env.update({"caption": extra_prompt, "fmtstr": alt_cmd_name,})
                 self.view.run_command("hg_command_asking", env)
                 return
-            self.view.run_command("hg_cmd_line", {"cmd": alt_cmd_name % env})
+            self.view.run_command("hg_cmd_line", {"cmd": alt_cmd_name % env, "display_name": hg_cmd})
         else:
-            self.view.run_command("hg_cmd_line", {"cmd": hg_cmd})
+            self.view.run_command("hg_cmd_line", {"cmd": hg_cmd, "display_name": hg_cmd})
 
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
