@@ -116,7 +116,6 @@ class CommandRunnerWorker(threading.Thread):
         self.view = view
         self.command_data = None
         self.fname = fname
-        print "XXX", display_name
         self.command_data = HG_COMMANDS.get(display_name, None)
 
     def on_main_thread(self, data):
