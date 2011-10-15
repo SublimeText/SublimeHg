@@ -55,6 +55,15 @@ def push_history(cmd):
         del history[0]
 
 
+def find_hg_root(path):
+    if os.path.exists(os.path.join(path, '.hg')):
+        return path
+    elif os.path.dirname(path) == path:
+        return None
+    else:
+        return find_hg_root(os.path.dirname(path))
+
+
 class HGServer(object):
     """I drive a Mercurial command server (Mercurial>=1.9).
 
@@ -100,12 +109,13 @@ class HGServer(object):
 
 
 class CommandRunnerWorker(threading.Thread):
-    def __init__(self, hgs, s, view):
+    def __init__(self, hgs, s, view, fname):
         threading.Thread.__init__(self)
         self.hgs = hgs
         self.s = s
         self.view = view
         self.command_data = None
+        self.fname = fname
         # we don't get the original command data, but its close relative
         canonical_name = s if ' ' not in s else s.split(' ')[0]
         cmd = find_command(canonical_name)
@@ -125,7 +135,11 @@ class CommandRunnerWorker(threading.Thread):
         global work_completed
         work_completed.clear()
         try:
-            data = self.hgs.run_command(self.s.encode(self.hgs.server.encoding))
+            cmd = self.s
+            repo_root = find_hg_root(os.path.dirname(self.fname))
+            if repo_root:
+                cmd += ' --repository "%s"' % repo_root
+            data = self.hgs.run_command(cmd.encode(self.hgs.server.encoding))
             sublime.set_timeout(functools.partial(self.on_main_thread, data), 0)
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
@@ -203,7 +217,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             sublime.status_message("SublimeHg:err:" + str(e))
             return
 
-        CommandRunnerWorker(hgs, s, self.view).start()
+        CommandRunnerWorker(hgs, s, self.view, self.view.file_name()).start()
             
 
 class CmdLineRestorer(sublime_plugin.EventListener):    
