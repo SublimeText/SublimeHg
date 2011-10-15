@@ -204,7 +204,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
     def on_done(self, s):
         # the user doesn't want anything to happen now
         if not work_completed.is_set():
-            sublime.status_message("Processing other request. Try again later.")
+            sublime.status_message("Processing another request. Try again later.")
             return
         if self.process_intrinsic_cmds(s): return
 
