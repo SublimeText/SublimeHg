@@ -6,7 +6,6 @@ syntax: glob
 
 *.cache
 *.sublime-workspace
-*.hidden-tmLanguage
 
 _*.txt
 history.txt

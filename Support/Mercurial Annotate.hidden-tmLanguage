@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Mercurial Annotate</string>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>constant.numeric.line-number.mercurial-annotate</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.other.mercurial-annotate</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^\s*(\d+)(:)</string>
+		</dict>
+	</array>
+	<key>scopeName</key>
+	<string>text.mercurial-annotate</string>
+	<key>uuid</key>
+	<string>c6d14ed9-34bb-4416-b891-7f557f3515df</string>
+</dict>
+</plist>
