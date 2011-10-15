@@ -29,9 +29,6 @@ push-location $root
 	start-process "python" -argumentlist ".\setup.py","spa" -NoNewWindow -Wait
 
 	(get-item ".\dist\SublimeHg.sublime-package").fullname | clip.exe
-	# make sure we don't create conflicts with our installation
-	write-host "Removing generated *.hidden.tmLanguage files."
-	remove-item "./Support/*.hidden-tmLanguage"
 pop-location
 
 if (-not $DontUpload) {
