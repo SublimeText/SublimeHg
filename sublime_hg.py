@@ -156,6 +156,8 @@ class CommandRunnerWorker(threading.Thread):
         if self.command_data and self.command_data.syntax_file:
             p.settings().set('gutter', True)
             p.set_syntax_file(self.command_data.syntax_file)
+        p.sel().clear()
+        p.sel().add(sublime.Region(0, 0))
 
 
 class HgCmdLineCommand(sublime_plugin.TextCommand):
