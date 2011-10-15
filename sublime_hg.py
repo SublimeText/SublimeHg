@@ -11,7 +11,7 @@ import hglib
 from hg_commands import HG_COMMANDS, HG_COMMANDS_LIST
 
 
-VERSION = '11.10.15'
+VERSION = '11.10.15a'
 
 ###############################################################################
 # Globals

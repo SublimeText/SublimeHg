@@ -10,7 +10,7 @@ HG_COMMANDS = {
                     enabled=True,
                     syntax_file='',
                     ),
-    'commit': cmd_data(
+    'commit...': cmd_data(
                     format_str='commit -m "%(input)s"',
                     prompt='Commit message:',
                     enabled=True,
@@ -33,12 +33,6 @@ HG_COMMANDS = {
                     prompt='',
                     enabled=True,
                     syntax_file='',
-                    ),
-    'annotate': cmd_data(
-                    format_str='',
-                    prompt='',
-                    enabled=False,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.hidden-tmLanguage',
                     ),
     'annotate (this file)': cmd_data(
                     format_str='annotate "%(file_name)s"',
