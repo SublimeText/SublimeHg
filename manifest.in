@@ -1,5 +1,5 @@
 include *.py *.txt
-include *.sublime-* *.tmLanguage
+include *.sublime-* *.hidden-tmLanguage
 
 exclude setup.py
 exclude _*.txt

@@ -38,13 +38,13 @@ HG_COMMANDS = {
                     format_str='',
                     prompt='',
                     enabled=False,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.tmLanguage',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.hidden-tmLanguage',
                     ),
     'annotate (this file)': cmd_data(
                     format_str='annotate "%(file_name)s"',
                     prompt='',
                     enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.tmLanguage',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.hidden-tmLanguage',
                     ),
     'bookmark (parent revision)': cmd_data(
                     format_str='bookmark "%(input)s"',
@@ -140,13 +140,13 @@ HG_COMMANDS = {
                     format_str='',
                     prompt='',
                     enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.tmLanguage',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.hidden-tmLanguage',
                     ),
     'log (this file)': cmd_data(
                     format_str='log "%(file_name)s"',
                     prompt='',
                     enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.tmLanguage',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.hidden-tmLanguage',
                     ),
     'manifest': cmd_data(
                     format_str='',
@@ -170,7 +170,7 @@ HG_COMMANDS = {
                     format_str='',
                     prompt='',
                     enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.tmLanguage',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.hidden-tmLanguage',
                     ),
     'parents': cmd_data(
                     format_str='',
@@ -248,13 +248,13 @@ HG_COMMANDS = {
                     format_str='',
                     prompt='',
                     enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.tmLanguage',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.hidden-tmLanguage',
                     ),
     "status (this file)": cmd_data(
                     format_str='status "%(file_name)s"',
                     prompt='',
                     enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.tmLanguage',
+                    syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.hidden-tmLanguage',
                     ),
     "summary": cmd_data(
                     format_str='',
