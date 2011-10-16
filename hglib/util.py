@@ -1,8 +1,4 @@
-import itertools, cStringIO, error, os
-import subprocess
-
-
-closefds = os.name == 'posix'
+import itertools, cStringIO, error, os, subprocess
 
 def grouper(n, iterable):
     ''' list(grouper(2, range(4))) -> [(0, 1), (2, 3)] '''
@@ -135,13 +131,19 @@ class reterrorhandler(object):
         """ Returns True if the return code was 0, False otherwise """
         return self.ret == 0
 
-def popen(args, **kwargs):
-    """A wrapper around subprocess.Popen to make sure that console windows are
-    hidden on Windows."""
-    if 'startupinfo' not in kwargs and os.name == 'nt':
-        # Hide the child process window on Windows.
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        kwargs['startupinfo'] = startupinfo
-    
-    return subprocess.Popen(args, **kwargs)
+close_fds = os.name == 'posix'
+
+startupinfo = None
+if os.name == 'nt':
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+def popen(args, env={}):
+    environ = None
+    if env:
+        environ = dict(os.environ)
+        environ.update(env)
+
+    return subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, close_fds=close_fds,
+                            startupinfo=startupinfo, env=environ)

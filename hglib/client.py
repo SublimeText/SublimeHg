@@ -19,14 +19,11 @@ class hgclient(object):
             args += ['-R', path]
         if configs:
             args += ['--config'] + configs
-        env = dict(os.environ)
+        env = {}
         if encoding:
             env['HGENCODING'] = encoding
 
-        self.server = util.popen(args, stdin=subprocess.PIPE,
-                                       stdout=subprocess.PIPE, env=env,
-                                       close_fds=util.closefds)
-
+        self.server = util.popen(args, env)
         self._readhello()
         self._version = None
 
