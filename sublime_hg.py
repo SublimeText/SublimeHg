@@ -13,7 +13,7 @@ from hg_commands import HG_COMMANDS_LIST
 from hg_commands import HG_COMMANDS_AND_SHORT_HELP
 
 
-VERSION = '11.10.15a'
+VERSION = '11.10.16'
 
 ###############################################################################
 # Globals
