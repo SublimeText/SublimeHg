@@ -483,7 +483,7 @@ if True:
 
     HG_COMMANDS.update(MQ_CMDS)
 
-FOR_UI_DISPLAY = [[x, HG_COMMANDS[x].help] for x in HG_COMMANDS]
+HG_COMMANDS_AND_SHORT_HELP = [[x, HG_COMMANDS[x].help] for x in HG_COMMANDS]
 HG_COMMANDS_LIST = [x.replace('.', '') for x in HG_COMMANDS if ' ' not in x]
 HG_COMMANDS_LIST = list(sorted(set(HG_COMMANDS_LIST)))
 
@@ -501,4 +501,4 @@ if __name__ == '__main__':
     print find_command('st')
     print find_command('s')
     print find_command('qu')
-    print FOR_UI_DISPLAY
+    print HG_COMMANDS_AND_SHORT_HELP

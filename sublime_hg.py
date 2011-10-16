@@ -8,7 +8,9 @@ import functools
 
 import hglib
 
-from hg_commands import HG_COMMANDS, HG_COMMANDS_LIST, FOR_UI_DISPLAY
+from hg_commands import HG_COMMANDS
+from hg_commands import HG_COMMANDS_LIST
+from hg_commands import HG_COMMANDS_AND_SHORT_HELP
 
 
 VERSION = '11.10.15a'
@@ -235,12 +237,13 @@ class HgCommand(sublime_plugin.TextCommand):
         return self.view.file_name()
 
     def run(self, edit):
-        self.view.window().show_quick_panel(FOR_UI_DISPLAY, self.on_done)
+        self.view.window().show_quick_panel(HG_COMMANDS_AND_SHORT_HELP,
+                                            self.on_done)
     
     def on_done(self, s):
         if s == -1: return
 
-        hg_cmd = FOR_UI_DISPLAY[s][0]
+        hg_cmd = HG_COMMANDS_AND_SHORT_HELP[s][0]
         alt_cmd_name, extra_prompt = HG_COMMANDS[hg_cmd].format_str, \
                                         HG_COMMANDS[hg_cmd].prompt
 
