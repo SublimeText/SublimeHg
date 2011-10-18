@@ -7,13 +7,14 @@ import threading
 import functools
 
 import hglib
+from hglib.error import ServerError
 
 from hg_commands import HG_COMMANDS
 from hg_commands import HG_COMMANDS_LIST
 from hg_commands import HG_COMMANDS_AND_SHORT_HELP
 
 
-VERSION = '11.10.16'
+VERSION = '11.10.18'
 
 ###############################################################################
 # Globals
@@ -85,7 +86,9 @@ class HGServer(object):
         # By default, hglib uses 'hg'. User might need to change that on
         # Windows, for example.
         hglib.HGPATH = hg_exe
-        self.server = hglib.open()
+        v = sublime.active_window().active_view()
+        self.server = hglib.open(path=find_hg_root(v.file_name())
+                                                            or v.file_name())
 
     def run_command(self, *args):
         # XXX We should probably use hglib's own utility funcs.
@@ -216,6 +219,10 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             hgs = HGServer(self.hg_exe)
         except EnvironmentError, e:
             sublime.status_message("SublimeHg:err:" + str(e))
+            return
+        except ServerError:
+            # we can't find any repository
+            sublime.status_message("SublimeHg:err: Cannot start server here.")
             return
 
         CommandRunnerWorker(hgs, s, self.view, self.view.file_name(), self.display_name).start()
