@@ -206,6 +206,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         self.view.run_command('hg_cmd_line', {'cmd': history[s]})
     
     def on_done(self, s):
+        # FIXME: won't work with short aliases like st, etc.
+        self.display_name = self.display_name or s.split(' ')[0]
         # the user doesn't want anything to happen now
         if not work_completed.is_set():
             sublime.status_message("Processing another request. Try again later.")
@@ -229,14 +231,20 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             
 
 class CmdLineRestorer(sublime_plugin.EventListener):    
+    def __init__(self):
+        sublime_plugin.EventListener.__init__(self)
+        self.restore = False
+
+    def on_deactivated(self, view):
+        if not is_interactive:
+            return
+        if view.name() == 'SublimeHg - Output':
+            self.restore = True
+    
     def on_activated(self, view):
-        global recent_file_name
-        global is_interactive
-        if not is_interactive: return
-        if not recent_file_name: return
-        if view.file_name() == recent_file_name:
-            recent_file_name = None
+        if self.restore:
             view.run_command('hg_cmd_line')
+            self.restore = False
     
 
 class HgCommand(sublime_plugin.TextCommand):
