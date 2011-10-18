@@ -16,6 +16,9 @@ from hg_commands import HG_COMMANDS_AND_SHORT_HELP
 
 VERSION = '11.10.18a'
 
+
+CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.tmLanguage'
+
 ###############################################################################
 # Globals
 #------------------------------------------------------------------------------
@@ -67,7 +70,8 @@ def find_hg_root(path):
 class HGServer(object):
     """I drive a Mercurial command server (Mercurial>=1.9).
 
-    Mercurial command server protocol: http://mercurial.selenic.com/wiki/CommandServer
+    For a description of the Mercurial command server protocol see:
+        * http://mercurial.selenic.com/wiki/CommandServer
     """
     def __init__(self, hg_exe='hg'):
         global running_server
@@ -93,10 +97,12 @@ class HGServer(object):
             args = shlex.split(args[0])
 
         if args[0] == 'hg':
-            print "SublimeHg:inf: Stripped superfluous 'hg' from '%s'" % ' '.join(args)
+            print "SublimeHg:inf: Stripped superfluous 'hg' from '%s'" % \
+                                                                ' '.join(args)
             args = args[1:]
         
-        print "SublimeHg:inf: Sending command '%s' as %s" % (' '.join(args), args)
+        print "SublimeHg:inf: Sending command '%s' as %s" % \
+                                                        (' '.join(args), args)
         try:
             ret = self.server.rawcommand(args)
             return ret
@@ -136,7 +142,9 @@ class CommandRunnerWorker(threading.Thread):
             if repo_root:
                 cmd += ' --repository "%s"' % repo_root
             data = self.hgs.run_command(cmd.encode(self.hgs.server.encoding))
-            sublime.set_timeout(functools.partial(self.on_main_thread, data), 0)
+            sublime.set_timeout(functools.partial(
+                                                self.on_main_thread,
+                                                data), 0)
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
             print e
@@ -171,10 +179,14 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         if not cmd:
             is_interactive = True
 
-            ip = self.view.window().show_input_panel('Hg command:', 'status', self.on_done, None, None)
+            ip = self.view.window().show_input_panel('Hg command:',
+                                                        'status',
+                                                        self.on_done,
+                                                        None,
+                                                        None)
             ip.sel().clear()
             ip.sel().add(sublime.Region(0, ip.size()))
-            ip.set_syntax_file('Packages/SublimeHg/Support/SublimeHg Command Line.tmLanguage')
+            ip.set_syntax_file(CMD_LINE_SYNTAX)
             # XXX If Vintage's on, the caret might look weird.
             # XXX This doesn't fix it correctly.
             ip.settings().set('command_mode', False)
@@ -218,7 +230,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return
 
         if getattr(self, 'worker', None) and self.worker.is_alive():
-            sublime.status_message("SublimeHg: Processing another request. Try again later.")
+            sublime.status_message("SublimeHg: Processing another request. "
+                                   "Try again later.")
             return
         self.worker = CommandRunnerWorker(hgs,
                                             s,
@@ -268,9 +281,15 @@ class HgCommand(sublime_plugin.TextCommand):
                 env.update({"caption": extra_prompt, "fmtstr": alt_cmd_name,})
                 self.view.run_command("hg_command_asking", env)
                 return
-            self.view.run_command("hg_cmd_line", {"cmd": alt_cmd_name % env, "display_name": hg_cmd})
+            self.view.run_command("hg_cmd_line", {
+                                                    "cmd": alt_cmd_name % env,
+                                                    "display_name": hg_cmd
+                                                })
         else:
-            self.view.run_command("hg_cmd_line", {"cmd": hg_cmd, "display_name": hg_cmd})
+            self.view.run_command("hg_cmd_line", {
+                                                    "cmd": hg_cmd,
+                                                    "display_name": hg_cmd
+                                                })
 
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
@@ -278,14 +297,20 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
         self.fmtstr = fmtstr
         self.content = kwargs
         if caption:
-            self.view.window().show_input_panel(caption, '', self.on_done, None, None)
+            self.view.window().show_input_panel(caption,
+                                                '',
+                                                self.on_done,
+                                                None,
+                                                None)
             return
         
-        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr % self.content})
+        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr %
+                                                                self.content})
     
     def on_done(self, s):
         self.content['input'] = s
-        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr % self.content})
+        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr %
+                                                                self.content})
 
 
 # XXX not ideal; missing commands
