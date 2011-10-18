@@ -22,9 +22,6 @@ VERSION = '11.10.18'
 HISTORY_MAX_LEN = 50
 PATH_TO_HISTORY = os.path.join(sublime.packages_path(), 'SublimeHg/history.txt')
 
-work_completed = threading.Event()
-work_completed.set()
-
 # Holds the HISTORY_MAX_LEN most recently used commands from the cmdline.
 history = []
 # Holds the existing server so it doesn't have to be reloaded.
@@ -133,8 +130,6 @@ class CommandRunnerWorker(threading.Thread):
         push_history(self.s)
 
     def run(self):
-        global work_completed
-        work_completed.clear()
         try:
             cmd = self.s
             repo_root = find_hg_root(os.path.dirname(self.fname))
@@ -146,8 +141,6 @@ class CommandRunnerWorker(threading.Thread):
             print "Oops (funny characters!)..."
             print e
             return
-        finally:
-            work_completed.set()
 
     def create_output_sink(self, data):
         p = self.view.window().new_file()
@@ -209,9 +202,6 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         # FIXME: won't work with short aliases like st, etc.
         self.display_name = self.display_name or s.split(' ')[0]
         # the user doesn't want anything to happen now
-        if not work_completed.is_set():
-            sublime.status_message("Processing another request. Try again later.")
-            return
         if self.process_intrinsic_cmds(s): return
 
         if not hasattr(self, 'hg_exe'):
@@ -227,7 +217,15 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             sublime.status_message("SublimeHg:err: Cannot start server here.")
             return
 
-        CommandRunnerWorker(hgs, s, self.view, self.view.file_name(), self.display_name).start()
+        if getattr(self, 'worker', None) and self.worker.is_alive():
+            sublime.status_message("SublimeHg: Processing another request. Try again later.")
+            return
+        self.worker = CommandRunnerWorker(hgs,
+                                            s,
+                                            self.view,
+                                            self.view.file_name(),
+                                            self.display_name)
+        self.worker.start()
             
 
 class CmdLineRestorer(sublime_plugin.EventListener):    
