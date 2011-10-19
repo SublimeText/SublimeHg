@@ -17,7 +17,7 @@ from hg_commands import HG_COMMANDS_AND_SHORT_HELP
 VERSION = '11.10.18b'
 
 
-CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.tmLanguage'
+CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
 
 ###############################################################################
 # Globals
