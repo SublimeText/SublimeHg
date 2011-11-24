@@ -59,6 +59,7 @@ def push_history(cmd):
 
 
 def find_hg_root(path):
+    # XXX check whether .hg is a dir too
     if os.path.exists(os.path.join(path, '.hg')):
         return path
     elif os.path.dirname(path) == path:
@@ -322,6 +323,7 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
     CACHED_COMPLETION_PREFIXES = []
 
     def on_query_completions(self, view, prefix, locations):
+        # Only provide completions to the SublimeHg command line.
         if view.score_selector(0, 'text.sublimehgcmdline') == 0:
             return []
         
@@ -332,11 +334,11 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
         if prefix and prefix in self.CACHED_COMPLETION_PREFIXES:
             return self.CACHED_COMPLETIONS
 
-        compls = [x for x in COMPLETIONS if x.startswith(prefix)]
-        self.CACHED_COMPLETION_PREFIXES = [prefix] + compls
-        self.CACHED_COMPLETIONS = zip([prefix] + compls, compls + [prefix])
+        new_completions = [x for x in COMPLETIONS if x.startswith(prefix)]
+        self.CACHED_COMPLETION_PREFIXES = [prefix] + new_completions
+        self.CACHED_COMPLETIONS = zip([prefix] + new_completions,
+                                                    new_completions + [prefix])
         return self.CACHED_COMPLETIONS
-
 
 # Load history if it exists
 load_history()
