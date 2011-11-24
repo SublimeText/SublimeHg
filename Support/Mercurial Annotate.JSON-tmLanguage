@@ -1,0 +1,12 @@
+{ "name": "Mercurial Annotate",
+  "scopeName": "text.mercurial-annotate", 
+  "patterns": [
+  	{  "match": "^\\s*(\\d+)(:)",
+  	   "captures": {
+  	       "1": { "name": "constant.numeric.line-number.mercurial-annotate" },
+  	       "2": { "name": "keyword.other.mercurial-annotate" }
+  	   }
+  	}
+  ],
+  "uuid": "c6d14ed9-34bb-4416-b891-7f557f3515df"
+}

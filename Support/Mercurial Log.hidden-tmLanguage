@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Mercurial Log</string>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>support.function.mercurial-log</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.other.changeset-ref.short.mercurial-log</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>entity.other.attribute-name.changeset-ref.long.mercurial-log</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^(changeset):\s+(\d+):([0-9a-z]+)$</string>
+		</dict>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>support.function.mercurial-log</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>string.user.name.mercurial-log</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.other.mercurial-log</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>constant.numeric.user.email.mercurial-log</string>
+				</dict>
+				<key>5</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.other.mercurial-log</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^(user):\s+(.+?) (&lt;)(.+)(&gt;)$</string>
+		</dict>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>support.function.mercurial-log</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>string.info.mercurial-log</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^(\w+):\s+(.+)$</string>
+		</dict>
+	</array>
+	<key>scopeName</key>
+	<string>text.mercurial-log</string>
+	<key>uuid</key>
+	<string>25e7259d-96d0-4ac0-83c7-f04acd0c8b84</string>
+</dict>
+</plist>

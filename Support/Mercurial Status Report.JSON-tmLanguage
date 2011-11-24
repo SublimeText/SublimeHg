@@ -1,0 +1,17 @@
+{ "name": "Mercurial Status Report",
+  "scopeName": "text.mercurial-status-report", 
+  "patterns": [
+  	{  "match": "^([AM!?])\\s+(.+)$",
+  	   "captures": {
+  	       "1": { "name": "support.function.status.mercurial-status-report" },
+  	       "2": { "name": "string.file-name.mercurial-status-report" }
+  	   }
+  	},
+    
+    {  "name": "string.mercurial-status-report",
+       "match": ".+"
+    }
+
+  ],
+  "uuid": "6086c539-0f15-4f54-a43b-3db7bb6ff106"
+}

@@ -1,0 +1,31 @@
+{ "name": "Mercurial Log",
+  "scopeName": "text.mercurial-log", 
+  "patterns": [
+
+    {  "match": "^(changeset):\\s+(\\d+):([0-9a-z]+)$",
+       "captures": {
+           "1": { "name": "support.function.mercurial-log" },
+           "2": { "name": "keyword.other.changeset-ref.short.mercurial-log" },
+           "3": { "name": "entity.other.attribute-name.changeset-ref.long.mercurial-log" }
+       }
+    },
+
+    {  "match": "^(user):\\s+(.+?) (<)(.+)(>)$",
+       "captures": {
+           "1": { "name": "support.function.mercurial-log" },
+           "2": { "name": "string.user.name.mercurial-log" },
+           "3": { "name": "keyword.other.mercurial-log" },
+           "4": { "name": "constant.numeric.user.email.mercurial-log" },
+           "5": { "name": "keyword.other.mercurial-log" }
+       }
+    },
+
+  	{  "match": "^(\\w+):\\s+(.+)$",
+  	   "captures": {
+  	       "1": { "name": "support.function.mercurial-log" },
+  	       "2": { "name": "string.info.mercurial-log" }
+  	   }
+  	}
+  ],
+  "uuid": "25e7259d-96d0-4ac0-83c7-f04acd0c8b84"
+}

@@ -1,17 +1,21 @@
 syntax: glob
 
+tags
+tags_sorted_by_file
+
 *.hgtags
 
 *.pyc
 
 *.cache
-*.sublime-project
+*.sublime-workspace
 
 _*.txt
+history.txt
 
 MANIFEST
 
-hglib/
+# hglib/
 dist/
 build/
 data/

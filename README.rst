@@ -25,7 +25,8 @@ Configuration
 
 By default, SublimeHg uses ``hg`` as the default executable name for Mercurial.
 If you need to use a different one, like ``hg.bat``, set the variable
-``packages.sublime_hg.hg_exe`` to it in your global settings (**Preferences | User Global Settings**).
+``packages.sublime_hg.hg_exe`` to it in your global settings (**Preferences |
+User Global Settings**).
 
 Example::
 
@@ -42,11 +43,30 @@ SublimeHg can be used in two ways:
 - Through a menu-driven interface (command: ``hg``)
 - Through a *command-line* interface (command: ``hg_cmd_line``)
 
-Both systems ultimately talk to the new Mercurial command server; they only
-differ in how you specify commands to it.
+Both systems ultimately talk to the new Mercurial command server. The
+command-line interface is more flexible than the other method.
 
-Normally, you will follow these steps:
+Normally, you will follow these steps to use SublimeHg:
 
 #. Open the Command Palette (``Ctrl+Shift+P``) and look for ``SublimeHg``.
 #. Select option
 #. Select Mercurial command (or type in command line)
+
+Alternatively, you can assign the ``hg_command_line`` and ``hg`` commands their
+own key bindings.
+
+History
+-------
+
+Open the SublimeHg command line and type:
+
+``!h``
+   Displays history.
+
+``!mkh``
+   Persists current history between sessions.
+
+Tab Completion
+--------------
+
+The command line will complete top level commands when you press ``Tab``.

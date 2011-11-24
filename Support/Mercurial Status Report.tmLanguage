@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Mercurial Status Report</string>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>support.function.status.mercurial-status-report</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>string.file-name.mercurial-status-report</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^([AM!?])\s+(.+)$</string>
+		</dict>
+		<dict>
+			<key>match</key>
+			<string>.+</string>
+			<key>name</key>
+			<string>string.mercurial-status-report</string>
+		</dict>
+	</array>
+	<key>scopeName</key>
+	<string>text.mercurial-status-report</string>
+	<key>uuid</key>
+	<string>6086c539-0f15-4f54-a43b-3db7bb6ff106</string>
+</dict>
+</plist>

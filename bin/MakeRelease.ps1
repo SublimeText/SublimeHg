@@ -5,6 +5,9 @@ $here = split-path $here -parent
 $root = resolve-path (join-path $here "..")
 
 push-location $root
+	# rename all .tmLanguage so they don't show up in syntax menu
+	get-childitem ".\Support\*.tmLanguage" | `
+						foreach-object { copy-item $_ ($_ -replace '.tmLanguage','.hidden-tmLanguage') }
 	if (-not (test-path (join-path $root "Doc"))) {
 		new-item -itemtype "d" -name "Doc" > $null
 		copy-item ".\Data\main.css" ".\Doc"
@@ -23,7 +26,7 @@ push-location $root
 
 	# Ensure MANIFEST reflects all changes to file system.
 	remove-item ".\MANIFEST" -erroraction silentlycontinue
-	& ".\setup.py" "spa"
+	start-process "python" -argumentlist ".\setup.py","spa" -NoNewWindow -Wait
 
 	(get-item ".\dist\SublimeHg.sublime-package").fullname | clip.exe
 pop-location
