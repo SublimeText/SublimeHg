@@ -111,11 +111,6 @@ class HGServer(object):
             print "SublimeHg:err: " + str(e)
             return str(e)
 
-    def shut_down(self):
-        print "SublimeHg:inf: Shutting down HG server..."
-        if not self.server.server.stdin.closed:
-            self.server.server.stdin.close()
-
 
 class CommandRunnerWorker(threading.Thread):
     def __init__(self, hgs, s, view, fname, display_name):
