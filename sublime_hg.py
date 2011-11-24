@@ -81,7 +81,6 @@ class HGServer(object):
         self.server = running_server
         if not running_server:
             self.start_server(hg_exe)
-
         running_server = self.server
 
     def start_server(self, hg_exe):
