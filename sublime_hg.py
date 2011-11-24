@@ -213,7 +213,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         # FIXME: won't work with short aliases like st, etc.
         self.display_name = self.display_name or s.split(' ')[0]
         # the user doesn't want anything to happen now
-        if self.process_intrinsic_cmds(s): return
+        if self.process_intrinsic_cmds(s):
+            return
 
         try:
             hgs = HGServer(get_hg_exe_name())
@@ -230,10 +231,10 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
                                    "Try again later.")
             return
         self.worker = CommandRunnerWorker(hgs,
-                                            s,
-                                            self.view,
-                                            self.view.file_name(),
-                                            self.display_name)
+                                          s,
+                                          self.view,
+                                          self.view.file_name(),
+                                          self.display_name)
         self.worker.start()
             
 
@@ -274,18 +275,14 @@ class HgCommand(sublime_plugin.TextCommand):
 
         if alt_cmd_name:            
             if extra_prompt:
-                env.update({"caption": extra_prompt, "fmtstr": alt_cmd_name,})
+                env.update({"caption": extra_prompt, "fmtstr": alt_cmd_name})
                 self.view.run_command("hg_command_asking", env)
                 return
-            self.view.run_command("hg_cmd_line", {
-                                                    "cmd": alt_cmd_name % env,
-                                                    "display_name": hg_cmd
-                                                })
+            self.view.run_command("hg_cmd_line", {"cmd": alt_cmd_name % env,
+                                                  "display_name": hg_cmd})
         else:
-            self.view.run_command("hg_cmd_line", {
-                                                    "cmd": hg_cmd,
-                                                    "display_name": hg_cmd
-                                                })
+            self.view.run_command("hg_cmd_line", {"cmd": hg_cmd,
+                                                  "display_name": hg_cmd})
 
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
