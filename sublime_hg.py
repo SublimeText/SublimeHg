@@ -112,23 +112,15 @@ class HGServer(object):
 
 
 class CommandRunnerWorker(threading.Thread):
+    """Runs the Mercurial command and reports the output.
+    """
     def __init__(self, hgs, s, view, fname, display_name):
         threading.Thread.__init__(self)
         self.hgs = hgs
         self.s = s
         self.view = view
-        self.command_data = None
         self.fname = fname
         self.command_data = HG_COMMANDS.get(display_name, None)
-
-    def on_main_thread(self, data):
-        if data:
-            self.create_output_sink(data.decode(self.hgs.server.encoding))
-            global recent_file_name
-            recent_file_name = self.view.file_name()
-        else:
-            sublime.status_message("SublimeHG - No output.")
-        push_history(self.s)
 
     def run(self):
         try:
@@ -137,13 +129,20 @@ class CommandRunnerWorker(threading.Thread):
             if repo_root:
                 cmd += ' --repository "%s"' % repo_root
             data = self.hgs.run_command(cmd.encode(self.hgs.server.encoding))
-            sublime.set_timeout(functools.partial(
-                                                self.on_main_thread,
-                                                data), 0)
+            sublime.set_timeout(functools.partial(self.show_output,
+                                                                    data), 0)
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
             print e
-            return
+
+    def show_output(self, data):
+        if data:
+            self.create_output_sink(data.decode(self.hgs.server.encoding))
+            global recent_file_name
+            recent_file_name = self.view.file_name()
+        else:
+            sublime.status_message("SublimeHG - No output.")
+        push_history(self.s)
 
     def create_output_sink(self, data):
         p = self.view.window().new_file()
