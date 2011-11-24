@@ -36,6 +36,11 @@ is_interactive = False
 #==============================================================================
 
 
+def get_hg_exe_name():
+    settings = sublime.load_settings('Global.sublime-settings')
+    return settings.get('packages.sublime_hg.hg_exe') or 'hg'
+
+
 def load_history():
     global history
     if os.path.exists(PATH_TO_HISTORY):
@@ -114,37 +119,37 @@ class HGServer(object):
 class CommandRunnerWorker(threading.Thread):
     """Runs the Mercurial command and reports the output.
     """
-    def __init__(self, hgs, s, view, fname, display_name):
+    def __init__(self, hgs, command, view, fname, display_name):
         threading.Thread.__init__(self)
         self.hgs = hgs
-        self.s = s
+        self.command = command 
         self.view = view
         self.fname = fname
         self.command_data = HG_COMMANDS.get(display_name, None)
 
     def run(self):
         try:
-            cmd = self.s
+            command = self.command
             repo_root = find_hg_root(os.path.dirname(self.fname))
             if repo_root:
-                cmd += ' --repository "%s"' % repo_root
-            data = self.hgs.run_command(cmd.encode(self.hgs.server.encoding))
-            sublime.set_timeout(functools.partial(self.show_output,
-                                                                    data), 0)
+                command += ' --repository "%s"' % repo_root
+            data = self.hgs.run_command(command.encode(self.hgs.server.encoding))
+            sublime.set_timeout(functools.partial(self.show_output, data), 0)
         except UnicodeDecodeError, e:
             print "Oops (funny characters!)..."
             print e
 
     def show_output(self, data):
         if data:
-            self.create_output_sink(data.decode(self.hgs.server.encoding))
+            self.create_output(data.decode(self.hgs.server.encoding))
+            # Make sure we know when to restore the cmdline later.
             global recent_file_name
             recent_file_name = self.view.file_name()
         else:
             sublime.status_message("SublimeHG - No output.")
-        push_history(self.s)
+        push_history(self.command)
 
-    def create_output_sink(self, data):
+    def create_output(self, data):
         p = self.view.window().new_file()
         p.set_name("SublimeHg - Output")
         p.set_scratch(True)
@@ -161,35 +166,34 @@ class CommandRunnerWorker(threading.Thread):
 
 class HgCmdLineCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
+        # Files without a path on disk cannot possibly be under version
+        # control.
         return self.view.file_name()
-
-    def configure(self):
-        s = sublime.load_settings('Global.sublime-settings')
-        self.hg_exe = s.get('packages.sublime_hg.hg_exe') or 'hg'
 
     def run(self, edit, cmd=None, display_name=None):
         self.display_name = display_name
+
         global is_interactive
-        if not cmd:
-            is_interactive = True
-
-            ip = self.view.window().show_input_panel('Hg command:',
-                                                        'status',
-                                                        self.on_done,
-                                                        None,
-                                                        None)
-            ip.sel().clear()
-            ip.sel().add(sublime.Region(0, ip.size()))
-            ip.set_syntax_file(CMD_LINE_SYNTAX)
-            # XXX If Vintage's on, the caret might look weird.
-            # XXX This doesn't fix it correctly.
-            ip.settings().set('command_mode', False)
-            ip.settings().set('inverse_caret_state', False)
-            ip.erase_status('mode')
+        is_interactive = not cmd
+        if is_interactive:
+            self.request_input()
             return
-
-        is_interactive = False
         self.on_done(cmd)
+    
+    def request_input(self):
+        ip = self.view.window().show_input_panel('Hg command:',
+                                                 'status',
+                                                 self.on_done,
+                                                 None,
+                                                 None)
+        ip.sel().clear()
+        ip.sel().add(sublime.Region(0, ip.size()))
+        ip.set_syntax_file(CMD_LINE_SYNTAX)
+        # XXX If Vintage's on, the caret might look weird.
+        # XXX This doesn't fix it correctly, though.
+        ip.settings().set('command_mode', False)
+        ip.settings().set('inverse_caret_state', False)
+        ip.erase_status('mode')
     
     def process_intrinsic_cmds(self, cmd):
         cmd = cmd.strip()
@@ -201,7 +205,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return True
         
     def repeat_history(self, s):
-        if s == -1: return
+        if s == -1:
+            return
         self.view.run_command('hg_cmd_line', {'cmd': history[s]})
     
     def on_done(self, s):
@@ -210,11 +215,8 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
         # the user doesn't want anything to happen now
         if self.process_intrinsic_cmds(s): return
 
-        if not hasattr(self, 'hg_exe'):
-            self.configure()
-
         try:
-            hgs = HGServer(self.hg_exe)
+            hgs = HGServer(get_hg_exe_name())
         except EnvironmentError, e:
             sublime.status_message("SublimeHg:err:" + str(e))
             return
