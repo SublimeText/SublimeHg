@@ -73,11 +73,13 @@ def find_hg_root(path):
         return find_hg_root(os.path.dirname(path))
 
 
-class HGServer(object):
+class HgCommandServer(object):
     """I drive a Mercurial command server (Mercurial>=1.9).
 
     For a description of the Mercurial command server protocol see:
         * http://mercurial.selenic.com/wiki/CommandServer
+    
+    This class uses the hglib library to manage the command server.
     """
     def __init__(self, hg_exe='hg'):
         global running_server
@@ -217,7 +219,7 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             return
 
         try:
-            hgs = HGServer(get_hg_exe_name())
+            hgs = HgCommandServer(get_hg_exe_name())
         except EnvironmentError, e:
             sublime.status_message("SublimeHg:err:" + str(e))
             return
