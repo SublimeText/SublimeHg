@@ -23,10 +23,9 @@ Getting Started
 Configuration
 =============
 
-By default, SublimeHg uses ``hg`` as the default executable name for Mercurial.
-If you need to use a different one, like ``hg.bat``, set the variable
-``packages.sublime_hg.hg_exe`` to it in your global settings (**Preferences |
-User Global Settings**).
+By default, the executable name for Mercurial is ``hg``. If you need to use a
+different one, such as ``hg.bat``, change the variable ``packages.sublime_hg.hg_exe``
+to it in **Preferences | Global Settings - User**.
 
 Example::
 
@@ -40,11 +39,12 @@ How to Use
 
 SublimeHg can be used in two ways:
 
-- Through a menu-driven interface (command: ``hg``)
-- Through a *command-line* interface (command: ``hg_cmd_line``)
+- Through a *menu*: ``show_sublime_hg_menu`` command.
+- Through a *command-line* interface: ``show_sublime_hg_cli`` command.
 
-Both systems ultimately talk to the new Mercurial command server. The
-command-line interface is more flexible than the other method.
+Regardless of the method used to call it, SublimeHg ultimately talks to the
+Mercurial command server. The command-line interface is the more flexible
+option, but some operations might be quicker through the menu.
 
 Normally, you will follow these steps to use SublimeHg:
 
@@ -52,21 +52,22 @@ Normally, you will follow these steps to use SublimeHg:
 #. Select option
 #. Select Mercurial command (or type in command line)
 
-Alternatively, you can assign the ``hg_command_line`` and ``hg`` commands their
-own key bindings.
+Alternatively, you can assign ``show_sublime_hg_cli`` and ``show_sublime_hg_menu``
+their own key bindings.
 
-History
--------
+.. # History
+.. -------
 
-Open the SublimeHg command line and type:
+.. Open the SublimeHg command line and type:
 
-``!h``
-   Displays history.
+.. ``!h``
+..    Displays history.
 
-``!mkh``
-   Persists current history between sessions.
+.. ``!mkh``
+..    Persists current history between sessions.
 
 Tab Completion
 --------------
 
-The command line will complete top level commands when you press ``Tab``.
+While in the command-line, top level commands will be autocompleted when you
+press ``Tab``.

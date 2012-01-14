@@ -1,0 +1,7 @@
+[
+	{"keys": ["enter"], "command": "sublime_hg_send_line",
+		"context": [
+			{"key": "selector", "operator": "equal", "operand": "source.sublime_hg_cli"}
+		]
+	}
+]
