@@ -28,7 +28,7 @@ PATH_TO_HISTORY = os.path.join(sublime.packages_path(), 'SublimeHg/history.txt')
 # Holds the HISTORY_MAX_LEN most recently used commands from the cmdline.
 history = []
 # Holds the existing server so it doesn't have to be reloaded.
-running_server = None
+running_servers = {}
 # Helps find the file where the cmdline should be restored.
 recent_file_name = None
 # Whether the user issued a command from the cmdline; restore cmdline if True.
@@ -63,19 +63,22 @@ class HgCommandServer(object):
         global running_server
 
         # Reuse existing server or start one.
-        self.server = running_server
         self.cwd = cwd
-        if not running_server:
+        v = sublime.active_window().active_view()
+        self.current_repo = find_hg_root(cwd or v.file_name())
+        if not self.current_repo in running_servers:
             self.start_server(hg_exe)
-        running_server = self.server
+        else:
+            self.server = running_servers[self.current_repo]
+        # running_server = self.server
 
     def start_server(self, hg_exe):
         # By default, hglib uses 'hg'. User might need to change that on
         # Windows, for example.
         hglib.HGPATH = hg_exe
-        v = sublime.active_window().active_view()
-        self.server = hglib.open(path=find_hg_root(self.cwd or v.file_name())
-                                                            or v.file_name())
+        self.server = hglib.open(path=self.current_repo)
+        global running_servers
+        running_servers[self.current_repo] = self.server
 
     def run_command(self, *args):
         # XXX We should probably use hglib's own utility funcs.
