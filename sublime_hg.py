@@ -14,7 +14,7 @@ from hg_commands import HG_COMMANDS_LIST
 from hg_commands import HG_COMMANDS_AND_SHORT_HELP
 
 
-VERSION = '11.11.23'
+VERSION = '12.1.14'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
@@ -41,28 +41,6 @@ def get_hg_exe_name():
     return settings.get('packages.sublime_hg.hg_exe') or 'hg'
 
 
-def load_history():
-    global history
-    if os.path.exists(PATH_TO_HISTORY):
-        with open(PATH_TO_HISTORY) as fh:
-            history = [ln[:-1] for ln in fh]
-
-
-def make_history(append=False):
-    mode = 'w' if not append else 'a'
-    with open(PATH_TO_HISTORY, mode) as fh:
-        fh.writelines('\n'.join(history))
-
-
-def push_history(cmd):
-    global history
-    if cmd not in history:
-        history.append(cmd)
-
-    if len(history) > HISTORY_MAX_LEN:
-        del history[0]
-
-
 def find_hg_root(path):
     # XXX check whether .hg is a dir too
     if os.path.exists(os.path.join(path, '.hg')):
@@ -76,16 +54,17 @@ def find_hg_root(path):
 class HgCommandServer(object):
     """I drive a Mercurial command server (Mercurial>=1.9).
 
-    For a description of the Mercurial command server protocol see:
+    For a description of the Mercurial command server see:
         * http://mercurial.selenic.com/wiki/CommandServer
-    
+
     This class uses the hglib library to manage the command server.
     """
-    def __init__(self, hg_exe='hg'):
+    def __init__(self, hg_exe='hg', cwd=None):
         global running_server
 
         # Reuse existing server or start one.
         self.server = running_server
+        self.cwd = cwd
         if not running_server:
             self.start_server(hg_exe)
         running_server = self.server
@@ -95,7 +74,7 @@ class HgCommandServer(object):
         # Windows, for example.
         hglib.HGPATH = hg_exe
         v = sublime.active_window().active_view()
-        self.server = hglib.open(path=find_hg_root(v.file_name())
+        self.server = hglib.open(path=find_hg_root(self.cwd or v.file_name())
                                                             or v.file_name())
 
     def run_command(self, *args):
@@ -107,7 +86,7 @@ class HgCommandServer(object):
             print "SublimeHg:inf: Stripped superfluous 'hg' from '%s'" % \
                                                                 ' '.join(args)
             args = args[1:]
-        
+
         print "SublimeHg:inf: Sending command '%s' as %s" % \
                                                         (' '.join(args), args)
         try:
@@ -121,18 +100,21 @@ class HgCommandServer(object):
 class CommandRunnerWorker(threading.Thread):
     """Runs the Mercurial command and reports the output.
     """
-    def __init__(self, hgs, command, view, fname, display_name):
+    def __init__(self, hgs, command, view, fname, display_name, append=False):
         threading.Thread.__init__(self)
         self.hgs = hgs
-        self.command = command 
+        self.command = command
         self.view = view
         self.fname = fname
         self.command_data = HG_COMMANDS.get(display_name, None)
+        self.append = append
 
     def run(self):
         try:
             command = self.command
-            repo_root = find_hg_root(os.path.dirname(self.fname))
+            dirname = self.fname if os.path.isdir(self.fname) else \
+                        os.path.dirname(self.fname)
+            repo_root = find_hg_root(dirname)
             if repo_root:
                 command += ' --repository "%s"' % repo_root
             data = self.hgs.run_command(command.encode(self.hgs.server.encoding))
@@ -142,84 +124,53 @@ class CommandRunnerWorker(threading.Thread):
             print e
 
     def show_output(self, data):
-        if data:
+        # If we're appending to the console, do it even if there's no data.
+        if data or self.append:
             self.create_output(data.decode(self.hgs.server.encoding))
             # Make sure we know when to restore the cmdline later.
             global recent_file_name
             recent_file_name = self.view.file_name()
+        # Just give feedback if we're running commands from the command
+        # palette and there's no data.
         else:
             sublime.status_message("SublimeHG - No output.")
-        push_history(self.command)
 
     def create_output(self, data):
-        p = self.view.window().new_file()
-        p.set_name("SublimeHg - Output")
-        p.set_scratch(True)
-        p_edit = p.begin_edit()
-        p.insert(p_edit, 0, data)
-        p.end_edit(p_edit)
-        p.settings().set('gutter', False)
-        if self.command_data and self.command_data.syntax_file:
-            p.settings().set('gutter', True)
-            p.set_syntax_file(self.command_data.syntax_file)
-        p.sel().clear()
-        p.sel().add(sublime.Region(0, 0))
+        # Output to the console or to a separate buffer.
+        if not self.append:
+            p = self.view.window().new_file()
+            p_edit = p.begin_edit()
+            p.insert(p_edit, 0, data)
+            p.end_edit(p_edit)
+            p.set_name("SublimeHg - Output")
+            p.set_scratch(True)
+            p.settings().set('gutter', False)
+            if self.command_data and self.command_data.syntax_file:
+                p.settings().set('gutter', True)
+                p.set_syntax_file(self.command_data.syntax_file)
+            p.sel().clear()
+            p.sel().add(sublime.Region(0, 0))
+        else:
+            p = self.view
+            p_edit = p.begin_edit()
+            p.insert(p_edit, self.view.size(), '\n' + data + "\n> ")
+            p.end_edit(p_edit)
+            p.show(self.view.size())
 
 
-class HgCmdLineCommand(sublime_plugin.TextCommand):
-    def is_enabled(self):
-        # Files without a path on disk cannot possibly be under version
-        # control.
-        return self.view.file_name()
-
-    def run(self, edit, cmd=None, display_name=None):
+class HgCommandRunnerCommand(sublime_plugin.TextCommand):
+    def run(self, edit, cmd=None, display_name=None, cwd=None, append=False):
         self.display_name = display_name
-
-        global is_interactive
-        is_interactive = not cmd
-        if is_interactive:
-            self.request_input()
-            return
+        self.cwd = cwd
+        self.append = append
         self.on_done(cmd)
-    
-    def request_input(self):
-        ip = self.view.window().show_input_panel('Hg command:',
-                                                 'status',
-                                                 self.on_done,
-                                                 None,
-                                                 None)
-        ip.sel().clear()
-        ip.sel().add(sublime.Region(0, ip.size()))
-        ip.set_syntax_file(CMD_LINE_SYNTAX)
-        # XXX If Vintage's on, the caret might look weird.
-        # XXX This doesn't fix it correctly, though.
-        ip.settings().set('command_mode', False)
-        ip.settings().set('inverse_caret_state', False)
-        ip.erase_status('mode')
-    
-    def process_intrinsic_cmds(self, cmd):
-        cmd = cmd.strip()
-        if cmd == '!h':
-            self.view.window().show_quick_panel(history, self.repeat_history)
-            return True
-        elif cmd.startswith('!mkh'):
-            make_history(append=(cmd.endswith('-a')))
-            return True
-        
-    def repeat_history(self, s):
-        if s == -1:
-            return
-        self.view.run_command('hg_cmd_line', {'cmd': history[s]})
-    
+
     def on_done(self, s):
         # FIXME: won't work with short aliases like st, etc.
         self.display_name = self.display_name or s.split(' ')[0]
-        # the user doesn't want anything to happen now
-        if self.process_intrinsic_cmds(s):
-            return
 
         try:
-            hgs = HgCommandServer(get_hg_exe_name())
+            hgs = HgCommandServer(get_hg_exe_name(), cwd=self.cwd)
         except EnvironmentError, e:
             sublime.status_message("SublimeHg:err:" + str(e))
             return
@@ -228,43 +179,29 @@ class HgCmdLineCommand(sublime_plugin.TextCommand):
             sublime.status_message("SublimeHg:err: Cannot start server here.")
             return
 
+        # FIXME: some long-running commands block an never exit. timeout?
         if getattr(self, 'worker', None) and self.worker.is_alive():
             sublime.status_message("SublimeHg: Processing another request. "
                                    "Try again later.")
             return
+
         self.worker = CommandRunnerWorker(hgs,
                                           s,
                                           self.view,
-                                          self.view.file_name(),
-                                          self.display_name)
+                                          self.cwd or self.view.file_name(),
+                                          self.display_name,
+                                          append=self.append,)
         self.worker.start()
-            
 
-class CmdLineRestorer(sublime_plugin.EventListener):    
-    def __init__(self):
-        sublime_plugin.EventListener.__init__(self)
-        self.restore = False
 
-    def on_deactivated(self, view):
-        if not is_interactive:
-            return
-        if view.name() == 'SublimeHg - Output':
-            self.restore = True
-    
-    def on_activated(self, view):
-        if self.restore:
-            view.run_command('hg_cmd_line')
-            self.restore = False
-    
-
-class HgCommand(sublime_plugin.TextCommand):
+class ShowSublimeHgMenuCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         return self.view.file_name()
 
     def run(self, edit):
         self.view.window().show_quick_panel(HG_COMMANDS_AND_SHORT_HELP,
                                             self.on_done)
-    
+
     def on_done(self, s):
         if s == -1: return
 
@@ -275,15 +212,15 @@ class HgCommand(sublime_plugin.TextCommand):
         fn = self.view.file_name()
         env = {"file_name": fn}
 
-        if alt_cmd_name:            
+        if alt_cmd_name:
             if extra_prompt:
                 env.update({"caption": extra_prompt, "fmtstr": alt_cmd_name})
                 self.view.run_command("hg_command_asking", env)
                 return
-            self.view.run_command("hg_cmd_line", {"cmd": alt_cmd_name % env,
+            self.view.run_command("hg_command_runner", {"cmd": alt_cmd_name % env,
                                                   "display_name": hg_cmd})
         else:
-            self.view.run_command("hg_cmd_line", {"cmd": hg_cmd,
+            self.view.run_command("hg_command_runner", {"cmd": hg_cmd,
                                                   "display_name": hg_cmd})
 
 
@@ -298,13 +235,13 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
                                                 None,
                                                 None)
             return
-        
-        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr %
+
+        self.view.run_command("hg_command_runner", {"cmd": self.fmtstr %
                                                                 self.content})
-    
+
     def on_done(self, s):
         self.content['input'] = s
-        self.view.run_command("hg_cmd_line", {"cmd": self.fmtstr %
+        self.view.run_command("hg_command_runner", {"cmd": self.fmtstr %
                                                                 self.content})
 
 
@@ -318,13 +255,14 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
 
     def on_query_completions(self, view, prefix, locations):
         # Only provide completions to the SublimeHg command line.
-        if view.score_selector(0, 'text.sublimehgcmdline') == 0:
+        if view.score_selector(0, 'source.sublime_hg_cli') == 0:
             return []
-        
+
         # Only complete top level commands.
-        if view.substr(sublime.Region(0, view.size())) != prefix:
+        current_line = view.substr(view.line(view.size()))[2:]
+        if current_line != prefix:
             return []
-        
+
         if prefix and prefix in self.CACHED_COMPLETION_PREFIXES:
             return self.CACHED_COMPLETIONS
 
@@ -333,6 +271,3 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
         self.CACHED_COMPLETIONS = zip([prefix] + new_completions,
                                                     new_completions + [prefix])
         return self.CACHED_COMPLETIONS
-
-# Load history if it exists
-load_history()

@@ -1,0 +1,6 @@
+{ "name": "Sublime Hg CLI (New)",
+  "scopeName": "source.sublime_hg_cli", 
+  "patterns": [
+  ],
+  "uuid": "d9e5ff0a-4258-4475-be50-2d7554d407f8"
+}
