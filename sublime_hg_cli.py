@@ -4,7 +4,7 @@ import os
 
 HG_CLI_BUFFER_NAME = '__ SublimeHg Console __'
 HG_CLI_PROMPT = '> '
-PATH_TO_HG_CLI_SYNTAX = "Packages/SublimeHg/Support/Sublime Hg CLI.tmLanguage"
+PATH_TO_HG_CLI_SYNTAX = "Packages/SublimeHg/Support/Sublime Hg CLI.hidden-tmLanguage"
 
 current_path = None # Dirname of latest active view (other than the console).
 current_console = None # View object (SublimeHg console).
