@@ -23,7 +23,8 @@ class ShowSublimeHgCli(sublime_plugin.TextCommand):
         # Reuse existing console.
         if current_console:
             self.view.window().focus_view(current_console)
-            return
+            if self.view.window().active_view().name() == HG_CLI_BUFFER_NAME:
+                return
 
         v = self.view.window().new_file()
 

@@ -71,3 +71,13 @@ Tab Completion
 
 While in the command-line, top level commands will be autocompleted when you
 press ``Tab``.
+
+
+Known Issues
+============
+
+If you switch projects, ``default-push`` might be carried over inadvertently
+from an unrelated repo. This should be inconvenient, but harmless. However,
+you might conceivably carry over a ``default-push`` from a related repo and you
+might end up pushing to the wrong repo. To solve this, always specify a
+``default-push`` in your ``.hg/hgrc`` file.
