@@ -26,6 +26,11 @@ class ShowSublimeHgCli(sublime_plugin.TextCommand):
             if self.view.window().active_view().name() == HG_CLI_BUFFER_NAME:
                 return
 
+        for v in self.view.window().views():
+            if v.name() == HG_CLI_BUFFER_NAME:
+                self.view.window().focus_view(v)
+                self.view.window().run_command('close')
+
         v = self.view.window().new_file()
 
         v.set_name(HG_CLI_BUFFER_NAME)
