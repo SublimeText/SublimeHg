@@ -115,11 +115,6 @@ class CommandRunnerWorker(threading.Thread):
     def run(self):
         try:
             command = self.command
-            dirname = self.fname if os.path.isdir(self.fname) else \
-                        os.path.dirname(self.fname)
-            repo_root = find_hg_root(dirname)
-            if repo_root:
-                command += ' --repository "%s"' % repo_root
             data = self.hgs.run_command(command.encode(self.hgs.server.encoding))
             sublime.set_timeout(functools.partial(self.show_output, data), 0)
         except UnicodeDecodeError, e:
