@@ -2,16 +2,10 @@ import sublime_plugin
 import sublime
 
 import os
-import re
 
 from hg_commands import find_cmd
-from hg_commands import NEEDS_INPUT
-from hg_commands import EDIT_COMMIT_MESSAGE
-from hg_commands import REQUIRES_INPUT
-from sublime_hg import running_servers
 from hg_commands import CommandNotFoundError
 from hg_commands import AmbiguousCommandError
-import hg_utils
 
 
 CLI_BUFFER_NAME = '==| SublimeHg Console |=='
@@ -20,23 +14,6 @@ CLI_SYNTAX_FILE = 'Packages/SublimeHg/Support/Sublime Hg CLI.hidden-tmLanguage'
 
 current_path = None # Dirname of latest active view (other than the console).
 existing_console = None # View object (SublimeHg console).
-
-
-def comand_wants_editor(cmd):
-    return re.search(r'(?:-e|--edit)\b', cmd)
-
-
-def command_has_input(cmd):
-    return re.search(r'-m\b', cmd)
-
-
-def fetch_commit_message():
-    global current_path
-    repo_root = hg_utils.find_hg_root(current_path)
-    msg = running_servers[repo_root].rawcommand(['-v', 'parent'])
-    msg = msg.decode(running_servers[repo_root].encoding)
-    _, _, msg = msg.partition('description:')
-    return msg.strip()
 
 
 class ShowSublimeHgCli(sublime_plugin.TextCommand):
@@ -126,20 +103,6 @@ class SublimeHgSendLine(sublime_plugin.TextCommand):
             self.append_output("SublimeHg: Ambiguous command.")
             self.write_prompt()
             return
-
-        if hg_utils.is_flag_set(actual_cmd.flags, NEEDS_INPUT):
-            if comand_wants_editor(cmd) or \
-                    (hg_utils.is_flag_set(actual_cmd.flags, REQUIRES_INPUT) \
-                     and not command_has_input(cmd)):
-                commit_message = ""
-                if hg_utils.is_flag_set(actual_cmd.flags, EDIT_COMMIT_MESSAGE) \
-                      and comand_wants_editor(cmd):
-                        commit_message = fetch_commit_message()
-
-                params = dict(cwd=current_path, caption="bogus", fmtstr=cmd,
-                              default_message=commit_message)
-                self.view.run_command('hg_command_asking_in_buffer', params)
-                return
 
         params = dict(cmd=cmd, cwd=current_path, append=True,
                       # send only first token (for command search)

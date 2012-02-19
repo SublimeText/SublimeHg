@@ -547,7 +547,6 @@ def format_for_display():
 
 
 def find_cmd(search_term):
-    print "FOO", search_term
     candidates = []
     for name, cmd_data in HG_COMMANDS.iteritems():
         if search_term in cmd_data.invocations:
@@ -566,7 +565,6 @@ def find_cmd(search_term):
         raise AmbiguousCommandError
     else:
         raise CommandNotFoundError
-
 
 
 HG_COMMANDS_AND_SHORT_HELP = format_for_display()

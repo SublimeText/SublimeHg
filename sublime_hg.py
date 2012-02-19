@@ -6,7 +6,6 @@ import shlex
 import threading
 import functools
 import subprocess
-import re
 
 import hglib
 from hglib.error import ServerError
@@ -16,8 +15,7 @@ from hg_commands import HG_COMMANDS_AND_SHORT_HELP
 from hg_commands import find_cmd
 from hg_commands import AmbiguousCommandError
 from hg_commands import CommandNotFoundError
-from hg_commands import EDIT_COMMIT_MESSAGE
-from hg_commands import SEPARATE_PROCESS
+from hg_commands import RUN_IN_OWN_CONSOLE
 import hg_utils
 
 
@@ -25,22 +23,14 @@ VERSION = '12.2.19'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
-INPUT_BUFFER_NAME = '==| SublimeHg User Input |=='
 
 ###############################################################################
 # Globals
 #------------------------------------------------------------------------------
-HISTORY_MAX_LEN = 50
-PATH_TO_HISTORY = os.path.join(sublime.packages_path(), 'SublimeHg/history.txt')
-
-# Holds the HISTORY_MAX_LEN most recently used commands from the cmdline.
-history = []
 # Holds the existing server so it doesn't have to be reloaded.
 running_servers = {}
 # Helps find the file where the cmdline should be restored.
 recent_file_name = None
-# Whether the user issued a command from the cmdline; restore cmdline if True.
-is_interactive = False
 #==============================================================================
 
 
@@ -108,9 +98,24 @@ class CommandRunnerWorker(threading.Thread):
         self.append = append
 
     def run(self):
-        if hg_utils.is_flag_set(self.command_data.flags, SEPARATE_PROCESS):
-            subprocess.Popen([self.hgs.hg_exe, self.command.encode(self.hgs.server.encoding)])
+        if hg_utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
+            if sublime.platform() == 'windows':
+                subprocess.Popen([self.hgs.hg_exe, self.command.encode(self.hgs.server.encoding)])
+            elif sublime.platform() == 'linux':
+                term = os.path.expandvars("$TERM")
+                if term:
+                    # At the moment, only hg serve goes this path.
+                    # TODO: if port is in use, the command will fail.
+                    cmd = [term, '-e', self.hgs.hg_exe, self.command]
+                    subprocess.Popen(cmd)
+                else:
+                    sublime.status_message("SublimeHg: No terminal found.")
+                    print "SublimeHg: No terminal found."
+            else:
+                sublime.status_message("SublimeHg: Not implemented.")
+                print "SublimeHg: Not implemented. " + self.command
             return
+
         try:
             command = self.command
             data = self.hgs.run_command(command.encode(self.hgs.server.encoding))
@@ -182,7 +187,7 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
             sublime.status_message("SublimeHg:err: Cannot start server here.")
             return
 
-        # FIXME: some long-running commands block an never exit. timeout?
+        # FIXME: some long-eunning commands block an never exit. timeout?
         if getattr(self, 'worker', None) and self.worker.is_alive():
             sublime.status_message("SublimeHg: Processing another request. "
                                    "Try again later.")
@@ -223,29 +228,7 @@ class ShowSublimeHgMenuCommand(sublime_plugin.TextCommand):
                 env['fmtstr'] = format_str
                 self.view.run_command('hg_command_asking', env)
                 return
-            # Handle requests for longer inputs either from a buffer or through
-            # the HGEDITOR, depending on the user's preference.
-            elif (not hg_utils.use_hg_editor() and
-                  # shlex doesn't support Unicode before Python 2.7.3, so use regexes.
-                  re.search(r'(?:-e|--edit)\b', format_str)):
 
-                # If the user requests editing the existing commit message, we
-                # need to retrieve it first.
-                if (hg_utils.is_flag_set(cmd_data.flags, EDIT_COMMIT_MESSAGE) and
-                    re.search(r'(?:-e|--edit)\b', format_str)):
-
-                    current_repo = hg_utils.find_hg_root(self.view.file_name())
-                    # This way of retrieving the existing commit message doesn't
-                    # seem to be particulary elegant or robust, but the Mercurial
-                    # API is unstable according to their own docs.
-                    msg = running_servers[current_repo].rawcommand(['-v', 'parent'])
-                    _, _, msg = msg.partition('description:')
-                    env.update({'default_message': msg.strip()})
-
-                env.update({'caption': cmd_data.prompt,
-                            'fmtstr': format_str})
-                self.view.run_command('hg_command_asking_in_buffer', env)
-                return
             # Command requires additional info, but it's provided automatically.
             self.view.run_command('hg_command_runner', {
                                               'cmd': format_str % env,
@@ -257,51 +240,6 @@ class ShowSublimeHgMenuCommand(sublime_plugin.TextCommand):
                                               'cmd': hg_cmd,
                                               'display_name': hg_cmd})
 
-
-class BufferInputEventListener(sublime_plugin.EventListener):
-    def on_close(self, view):
-        try:
-            if view.name() == INPUT_BUFFER_NAME:
-                user_input = view.substr(sublime.Region(0, view.size()))
-                if user_input.strip():
-                    HgCommandAskingInBufferCommand.last_content['input'] = user_input
-                    sublime.active_window().run_command('prev_view_in_stack')
-                    if sublime.active_window().active_view().name() == CLI_BUFFER_NAME:
-                        sublime.active_window().run_command('prev_view_in_stack')
-                        # sublime.active_window().run_command('close')
-                    view.run_command('hg_command_runner', {
-                                        'cmd': HgCommandAskingInBufferCommand.last_format_str % \
-                                               HgCommandAskingInBufferCommand.last_content
-                        })
-                else:
-                    # user provided empty message
-                    sublime.status_message("SublimeHg: Aborted - Nothing happened.")
-        finally:
-            # Clean up after ourselves.
-            HgCommandAskingInBufferCommand.last_content = None
-            HgCommandAskingInBufferCommand.last_format_str = None
-
-
-class HgCommandAskingInBufferCommand(sublime_plugin.TextCommand):
-    last_content = None
-    last_format_str = None
-    def run(self, edit, caption='', fmtstr='', **kwargs):
-        self.fmtstr = fmtstr
-        self.content = kwargs
-        if caption:
-            if re.search(r'(?:-e|--edit)\b', self.fmtstr):
-                self.fmtstr = re.sub(r'(?:-e|--edit)\b', '', self.fmtstr)
-                self.fmtstr += ' -m "%(input)s"'
-            HgCommandAskingInBufferCommand.last_content = self.content
-            HgCommandAskingInBufferCommand.last_format_str = self.fmtstr
-            v = self.view.window().new_file()
-            v.set_name(INPUT_BUFFER_NAME)
-            v.insert(edit, 0, kwargs.get('default_message', ''))
-            v.set_scratch(True)
-            return
-
-        kwargs["cmd"] = self.fmtstr % self.content
-        self.view.run_command("hg_command_runner", kwargs)
 
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
@@ -326,7 +264,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
 
 
 # XXX not ideal; missing commands
-COMPLETIONS = HG_COMMANDS_LIST + ['!h', '!mkh']
+COMPLETIONS = HG_COMMANDS_LIST
 
 
 class HgCompletionsProvider(sublime_plugin.EventListener):
@@ -351,7 +289,3 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
         self.CACHED_COMPLETIONS = zip([prefix] + new_completions,
                                                     new_completions + [prefix])
         return self.CACHED_COMPLETIONS
-
-
-# Avoid circular import.
-from sublime_hg_cli import CLI_BUFFER_NAME
