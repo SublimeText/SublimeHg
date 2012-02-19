@@ -1,487 +1,574 @@
 from collections import namedtuple
 
 
-cmd_data = namedtuple('cmd_data','format_str prompt enabled syntax_file help')
+class CommandNotFoundError(Exception):
+    pass
+
+
+class AmbiguousCommandError(Exception):
+    pass
+
+
+cmd_data = namedtuple('cmd_data','invocations prompt enabled syntax_file help flags')
+
+# Flags
+RUN_IN_OWN_CONSOLE = 0x02
 
 HG_COMMANDS = {
-    'commit...': cmd_data(
-                    format_str='commit -m "%(input)s"',
+    'commit': cmd_data(
+                    invocations={'commit...': 'commit -m "%(input)s"',
+                                 'commit (this file)': 'commit "%(file_name)s" -m "%(input)s"',
+                                },
                     prompt='Commit message:',
                     enabled=True,
                     syntax_file='',
                     help='commit the specified files or all outstanding changes',
+                    flags=0,
                     ),
     'add': cmd_data(
-                    format_str='',
+                    invocations={'add (this file)': 'add "%(file_name)s"',
+                                 'add': 'add',
+                               },
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='add the specified files on the next commit',
-                    ),
-    'add (this file)': cmd_data(
-                    format_str='add "%(file_name)s"',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='',
-                    help='add the specified files on the next commit',
+                    flags=0,
                     ),
     'addremove': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='add all new files, delete all missing files',
+                    flags=0,
                     ),
-    'annotate (this file)': cmd_data(
-                    format_str='annotate "%(file_name)s"',
+    'annotate': cmd_data(
+                    invocations={'annotate (this file)': 'annotate "%(file_name)s"',
+                                'blame (this file)': 'annotate "%(file_name)s"',
+                               },
                     prompt='',
                     enabled=True,
                     syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.hidden-tmLanguage',
                     help='show changeset information by line for each file',
+                    flags=0,
                     ),
-    'blame (this file)': cmd_data(
-                    format_str='annotate "%(file_name)s"',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Annotate.hidden-tmLanguage',
-                    help='show changeset information by line for each file',
-                    ),
-    'bookmark (parent revision)': cmd_data(
-                    format_str='bookmark "%(input)s"',
+    'bookmark': cmd_data(
+                    invocations={'bookmark (parent revision)': 'bookmark "%(input)s"',
+                                },
                     prompt='Bookmark name:',
                     enabled=True,
                     syntax_file='',
                     help='track a line of development with movable markers',
+                    flags=0,
                     ),
     'bookmarks': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='track a line of development with movable markers',
+                    flags=0,
                     ),
     'branch': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='set or show the current branch name',
+                    flags=0,
                     ),
     'branches': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='list repository named branches',
+                    flags=0,
                     ),
-    'commit (this file)': cmd_data(
-                    format_str='commit "%(file_name)s" -m "%(input)s"',
+    'commit': cmd_data(
+                    invocations={'commit (this file)': 'commit "%(file_name)s" -m "%(input)s"',
+                        },
                     prompt='Commit message:',
                     enabled=True,
                     syntax_file='',
                     help='commit the specified files or all outstanding changes',
+                    flags=0,
                     ),
     'diff': cmd_data(
-                    format_str='',
+                    invocations={'diff (this file)': 'diff "%(file_name)s"',
+                                 'diff': 'diff',
+                        },
                     prompt='',
                     enabled=True,
                     syntax_file='Packages/Diff/Diff.tmLanguage',
                     help='diff repository (or selected files)',
+                    flags=0,
                     ),
-    'diff (this file)': cmd_data(
-                    format_str='diff "%(file_name)s"',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='Packages/Diff/Diff.tmLanguage',
-                    help='diff repository (or selected files)',
-                    ),
-    'forget (this file)': cmd_data(
-                    format_str='forget "%(file_name)s"',
+    'forget': cmd_data(
+                    invocations={'forget (this file)': 'forget "%(file_name)s"',
+                        },
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='forget the specified files on the next commit',
+                    flags=0,
                     ),
-    'grep...': cmd_data(
-                    format_str='grep "%(input)s"',
+    'grep': cmd_data(
+                    invocations={'grep...': 'grep "%(input)s"',
+                                },
                     prompt='Pattern (grep):',
                     enabled=True,
                     syntax_file='',
                     help='search for a pattern in specified files and revisions',
+                    flags=0,
                     ),
     'heads': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='show current repository heads or show branch heads',
+                    flags=0,
                     ),
     'help': cmd_data(
-                    format_str='',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='',
-                    help='show help for a given topic or a help overview',
-                    ),
-    'help...': cmd_data(
-                    format_str='help "%(input)s"',
+                    invocations={'help...': 'help "%(input)s"',
+                                 'help': 'help',
+                        },
                     prompt='Help topic:',
                     enabled=True,
                     syntax_file='',
                     help='show help for a given topic or a help overview',
+                    flags=0,
                     ),
     'indentify': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='identify the working copy or specified revision',
+                    flags=0,
                     ),
     'incoming': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='show new changesets found in source',
+                    flags=0,
                     ),
-    'locate...': cmd_data(
-                    format_str='locate "%(input)s"',
+    'locate': cmd_data(
+                    invocations={'locate': 'locate "%(input)s"'
+                                },
                     prompt='Pattern:',
                     enabled=True,
                     syntax_file='',
                     help='locate files matching specific patterns',
+                    flags=0,
                     ),
     'log': cmd_data(
-                    format_str='',
+                    invocations={'log (this file)': 'log "%(file_name)s"',
+                                 'log': 'log',
+                                },
                     prompt='',
                     enabled=True,
                     syntax_file='Packages/SublimeHg/Support/Mercurial Log.hidden-tmLanguage',
                     help='show revision history of entire repository or files',
-                    ),
-    'log (this file)': cmd_data(
-                    format_str='log "%(file_name)s"',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Log.hidden-tmLanguage',
-                    help='show revision history of entire repository or files',
+                    flags=0,
                     ),
     'manifest': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='output the current or given revision of the project manifest',
+                    flags=0,
                     ),
     'merge': cmd_data(
-                    format_str='',
+                    invocations={'merge...': 'merge "%(input)s"',
+                                 'merge': 'merge',
+                                },
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='merge working directory with another revision',
-                    ),
-    'merge...': cmd_data(
-                    format_str='merge "%(input)s"',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='',
-                    help='merge working directory with another revision',
+                    flags=0,
                     ),
     'outgoing': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='Packages/SublimeHg/Support/Mercurial Log.hidden-tmLanguage',
                     help='show changesets not found in the destination',
+                    flags=0,
                     ),
     'parents': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='show the parents of the working directory or revision',
+                    flags=0,
                     ),
     'paths': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='show aliases for remote repositories',
+                    flags=0,
                     ),
     'pull': cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='pull changes from the specified source',
+                    flags=0,
                     ),
-    'push': cmd_data(
-                    format_str='',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='',
-                    help='push changes to the specified destination',
-                    ),
-    "push...": cmd_data(
-                    format_str='push "%(input)s"',
+    "push": cmd_data(
+                    invocations={'push...': 'push "%(input)s"',
+                                 'push': 'push',
+                        },
                     prompt="Push target:",
                     enabled=True,
                     syntax_file='',
                     help='push changes to the specified destination',
+                    flags=0,
                     ),
     "recover": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='roll back an interrupted transaction',
+                    flags=0,
                     ),
-    "remove (this file)...": cmd_data(
-                    format_str='remove "%(input)s"',
+    "remove": cmd_data(
+                    invocations={'remove (this file)': 'remove "%(input)s"',
+                        },
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='remove the specified files on the next commit',
+                    flags=0,
                     ),
-    "rename (this file)...": cmd_data(
-                    format_str='rename "%(file_name)s" "%(input)s"',
+    "rename": cmd_data(
+                    invocations={'rename (this file)': 'rename "%(file_name)s" "%(input)s"',
+                        },
                     prompt="New name:",
                     enabled=True,
                     syntax_file='',
                     help='rename files; equivalent of copy + remove',
+                    flags=0,
                     ),
-    "resolve (this file)": cmd_data(
-                    format_str='resolve "%(file_name)s"',
+    "resolve": cmd_data(
+                    invocations={'resolve (this file)': 'resolve "%(file_name)s"',
+                        },
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='redo merges or set/view the merge status of files',
+                    flags=0,
                     ),
-    "revert (this file)": cmd_data(
-                    format_str='revert "%(file_name)s"',
+    "revert": cmd_data(
+                    invocations={'revert (this file)': 'revert "%(file_name)s"',
+                        },
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='restore files to their checkout state',
+                    flags=0,
                     ),
     "rollback": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='roll back the last transaction (dangerous)',
+                    flags=0,
                     ),
     "root": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='print the root (top) of the current working directory',
+                    flags=0,
                     ),
     "showconfig": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='show combined config settings from all hgrc files',
+                    flags=0,
                     ),
     "status": cmd_data(
-                    format_str='',
+                    invocations={'status (this file)': 'status "%(file_name)s"',
+                                 'status': 'status',
+                        },
                     prompt='',
                     enabled=True,
                     syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.hidden-tmLanguage',
                     help='show changed files in the working directory',
-                    ),
-    "status (this file)": cmd_data(
-                    format_str='status "%(file_name)s"',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='Packages/SublimeHg/Support/Mercurial Status Report.hidden-tmLanguage',
-                    help='show changed files in the working directory',
+                    flags=0,
                     ),
     "summary": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='summarize working directory state',
+                    flags=0,
                     ),
-    "tag...": cmd_data(
-                    format_str='tag "%(input)s"',
+    "tag": cmd_data(
+                    invocations={'tag...': 'tag "%(input)s"',
+                        },
                     prompt="Tag name:",
                     enabled=True,
                     syntax_file='',
                     help='add one or more tags for the current or given revision',
+                    flags=0,
                     ),
     "tags": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='list repository tags',
+                    flags=0,
                     ),
     "tip": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='show the tip revision',
+                    flags=0,
                     ),
     "update": cmd_data(
-                    format_str='',
-                    prompt='',
-                    enabled=True,
-                    syntax_file='',
-                    help='update working directory (or switch revisions)',
-                    ),
-    "update...": cmd_data(
-                    format_str='update "%(input)s"',
+                    invocations={'update...': 'update "%(input)s"',
+                                 'update': 'update',
+                        },
                     prompt="Branch:",
                     enabled=True,
                     syntax_file='',
                     help='update working directory (or switch revisions)',
+                    flags=0,
                     ),
     "verify": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='verify the integrity of the repository',
+                    flags=0,
                     ),
     "version": cmd_data(
-                    format_str='',
+                    invocations={},
                     prompt='',
                     enabled=True,
                     syntax_file='',
                     help='output version and copyright information',
+                    flags=0,
+                    ),
+    "serve": cmd_data(
+                    invocations={"serve": "serve"},
+                    prompt='',
+                    enabled=True,
+                    syntax_file='',
+                    help='',
+                    flags=RUN_IN_OWN_CONSOLE,
                     ),
 }
 
 # At some point we'll let the user choose whether to load extensions.
+# FIXME! - re-enable this.
 if True:
     MQ_CMDS = {
         "qapplied": cmd_data(
-                        format_str='qapplied -s',
+                        invocations={'qapplied': 'qapplied -s',
+                                   },
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qdiff": cmd_data(
-                        format_str='',
+                        invocations={},
                         prompt='',
                         enabled=True,
                         syntax_file='Packages/Diff/Diff.tmLanguage',
                         help='',
+                        flags=0,
                         ),
-        "qgoto...": cmd_data(
-                        format_str='qgoto "%(input)s"',
+        "qgoto": cmd_data(
+                        invocations={'qgoto...':'qgoto "%(input)s"',
+                                   },
                         prompt="Patch name:",
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qheader": cmd_data(
-                        format_str='',
-                        prompt='',
-                        enabled=True,
-                        syntax_file='',
-                        help='',
-                        ),
-        "qheader...": cmd_data(
-                        format_str='qheader "%(input)s"',
+                        invocations={'qheader...': 'qheader "%(input)s"',
+                                     'qheader': 'qheader',
+                                   },
                         prompt="Patch name:",
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qnext": cmd_data(
-                        format_str='qnext -s',
+                        invocations={'qnext': 'qnext -s',
+                                   },
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qpop": cmd_data(
-                        format_str='',
+                        invocations={},
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qprev": cmd_data(
-                        format_str='qprev -s',
+                        invocations={'qprev': 'qprev -s',
+                                   },
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qpush": cmd_data(
-                        format_str='',
+                        invocations={},
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qrefresh": cmd_data(
-                        format_str='',
-                        prompt='',
+                        invocations={'qrefresh... (EDIT commit message': 'qrefresh -e',
+                                     'qrefresh... (NEW commit message)': 'qrefresh -m "%(input)s"',
+                                     'qrefresh': 'qrefresh',
+                                   },
+                        prompt='Commit message:',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
-        "qrefresh... (EDIT commit message)": cmd_data(
-                        format_str='qrefresh -e',
-                        prompt='',
+        "qfold": cmd_data(
+                        invocations={'qfold...': 'qfold "%(input)s"'},
+                        prompt='Patch name:',
                         enabled=True,
                         syntax_file='',
                         help='',
-                        ),
-        "qrefresh... (NEW commit message)": cmd_data(
-                        format_str='qrefresh -m "%(input)s"',
-                        prompt="Commit message:",
-                        enabled=True,
-                        syntax_file='',
-                        help='',
+                        flags=0,
                         ),
         "qseries": cmd_data(
-                        format_str='qseries -s',
+                        invocations={'qseries': 'qseries -s',
+                                   },
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
-        "qfinish...": cmd_data(
-                        format_str='qfinish "%(input)s"',
+        "qfinish": cmd_data(
+                        invocations={'qfinish': 'qfinish "%(input)s"',
+                                   },
                         prompt='Patch name:',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
-        "qnew...": cmd_data(
-                        format_str='qnew "%(input)s"',
+        "qnew": cmd_data(
+                        invocations={'qnew': 'qnew "%(input)s"',
+                                       },
                         prompt='Patch name:',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
+                        ),
+        "qdelete": cmd_data(
+                        invocations={'qdelete': 'qdelete "%(input)s"',
+                                       },
+                        prompt='Patch name:',
+                        enabled=True,
+                        syntax_file='',
+                        help='',
+                        flags=0,
                         ),
         "qtop": cmd_data(
-                        format_str='qtop -s',
+                        invocations={'qtop': 'qtop -s',
+                                   },
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
         "qunapplied": cmd_data(
-                        format_str='',
+                        invocations={},
                         prompt='',
                         enabled=True,
                         syntax_file='',
                         help='',
+                        flags=0,
                         ),
-    } 
+    }
 
     HG_COMMANDS.update(MQ_CMDS)
 
-HG_COMMANDS_AND_SHORT_HELP = [[x, HG_COMMANDS[x].help] for x in HG_COMMANDS]
+
+def format_for_display():
+    all_cmds = []
+    for name, cmd_data in HG_COMMANDS.iteritems():
+        if cmd_data.invocations:
+            for display_name, invocation in cmd_data.invocations.iteritems():
+                all_cmds.append([display_name, cmd_data.help])
+        else:
+            all_cmds.append([name, cmd_data.help])
+
+    return sorted(all_cmds, key=lambda x: x[0])
+
+
+def find_cmd(search_term):
+    print "FOO", search_term
+    candidates = []
+    for name, cmd_data in HG_COMMANDS.iteritems():
+        if search_term in cmd_data.invocations:
+            return cmd_data.invocations[search_term], cmd_data
+            break
+        elif search_term == name:
+            return name, cmd_data
+            break
+        elif name.startswith(search_term):
+            candidates.append((name, cmd_data))
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    if len(candidates) > 1:
+        raise AmbiguousCommandError
+    else:
+        raise CommandNotFoundError
+
+
+
+HG_COMMANDS_AND_SHORT_HELP = format_for_display()
 HG_COMMANDS_LIST = [x.replace('.', '') for x in HG_COMMANDS if ' ' not in x]
 HG_COMMANDS_LIST = list(sorted(set(HG_COMMANDS_LIST)))
