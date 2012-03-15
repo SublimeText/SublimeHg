@@ -5,16 +5,21 @@ import os
 import shlex
 import threading
 import functools
+import subprocess
 
 import hglib
 from hglib.error import ServerError
 
-from hg_commands import HG_COMMANDS
 from hg_commands import HG_COMMANDS_LIST
 from hg_commands import HG_COMMANDS_AND_SHORT_HELP
+from hg_commands import find_cmd
+from hg_commands import AmbiguousCommandError
+from hg_commands import CommandNotFoundError
+from hg_commands import RUN_IN_OWN_CONSOLE
+import hg_utils
 
 
-VERSION = '12.1.14'
+VERSION = '12.2.19'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
@@ -22,33 +27,11 @@ CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLa
 ###############################################################################
 # Globals
 #------------------------------------------------------------------------------
-HISTORY_MAX_LEN = 50
-PATH_TO_HISTORY = os.path.join(sublime.packages_path(), 'SublimeHg/history.txt')
-
-# Holds the HISTORY_MAX_LEN most recently used commands from the cmdline.
-history = []
 # Holds the existing server so it doesn't have to be reloaded.
-running_server = None
+running_servers = {}
 # Helps find the file where the cmdline should be restored.
 recent_file_name = None
-# Whether the user issued a command from the cmdline; restore cmdline if True.
-is_interactive = False
 #==============================================================================
-
-
-def get_hg_exe_name():
-    settings = sublime.load_settings('Global.sublime-settings')
-    return settings.get('packages.sublime_hg.hg_exe') or 'hg'
-
-
-def find_hg_root(path):
-    # XXX check whether .hg is a dir too
-    if os.path.exists(os.path.join(path, '.hg')):
-        return path
-    elif os.path.dirname(path) == path:
-        return None
-    else:
-        return find_hg_root(os.path.dirname(path))
 
 
 class HgCommandServer(object):
@@ -63,19 +46,23 @@ class HgCommandServer(object):
         global running_server
 
         # Reuse existing server or start one.
-        self.server = running_server
+        self.hg_exe = hg_exe
         self.cwd = cwd
-        if not running_server:
+        v = sublime.active_window().active_view()
+        self.current_repo = hg_utils.find_hg_root(cwd or v.file_name())
+        if not self.current_repo in running_servers:
             self.start_server(hg_exe)
-        running_server = self.server
+        else:
+            self.server = running_servers[self.current_repo]
+        # running_server = self.server
 
     def start_server(self, hg_exe):
         # By default, hglib uses 'hg'. User might need to change that on
         # Windows, for example.
         hglib.HGPATH = hg_exe
-        v = sublime.active_window().active_view()
-        self.server = hglib.open(path=find_hg_root(self.cwd or v.file_name())
-                                                            or v.file_name())
+        self.server = hglib.open(path=self.current_repo)
+        global running_servers
+        running_servers[self.current_repo] = self.server
 
     def run_command(self, *args):
         # XXX We should probably use hglib's own utility funcs.
@@ -106,21 +93,35 @@ class CommandRunnerWorker(threading.Thread):
         self.command = command
         self.view = view
         self.fname = fname
-        self.command_data = HG_COMMANDS.get(display_name, None)
+        self.command_data = find_cmd(display_name)[1]
+
         self.append = append
 
     def run(self):
+        if hg_utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
+            if sublime.platform() == 'windows':
+                subprocess.Popen([self.hgs.hg_exe, self.command.encode(self.hgs.server.encoding)])
+            elif sublime.platform() == 'linux':
+                term = os.path.expandvars("$TERM")
+                if term:
+                    # At the moment, only hg serve goes this path.
+                    # TODO: if port is in use, the command will fail.
+                    cmd = [term, '-e', self.hgs.hg_exe, self.command]
+                    subprocess.Popen(cmd)
+                else:
+                    sublime.status_message("SublimeHg: No terminal found.")
+                    print "SublimeHg: No terminal found."
+            else:
+                sublime.status_message("SublimeHg: Not implemented.")
+                print "SublimeHg: Not implemented. " + self.command
+            return
+
         try:
             command = self.command
-            dirname = self.fname if os.path.isdir(self.fname) else \
-                        os.path.dirname(self.fname)
-            repo_root = find_hg_root(dirname)
-            if repo_root:
-                command += ' --repository "%s"' % repo_root
             data = self.hgs.run_command(command.encode(self.hgs.server.encoding))
             sublime.set_timeout(functools.partial(self.show_output, data), 0)
         except UnicodeDecodeError, e:
-            print "Oops (funny characters!)..."
+            print "SublimeHg: Can't handle command string characters."
             print e
 
     def show_output(self, data):
@@ -133,7 +134,7 @@ class CommandRunnerWorker(threading.Thread):
         # Just give feedback if we're running commands from the command
         # palette and there's no data.
         else:
-            sublime.status_message("SublimeHG - No output.")
+            sublime.status_message("SublimeHg - No output.")
 
     def create_output(self, data):
         # Output to the console or to a separate buffer.
@@ -163,14 +164,21 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
         self.display_name = display_name
         self.cwd = cwd
         self.append = append
-        self.on_done(cmd)
+        try:
+            self.on_done(cmd)
+        except CommandNotFoundError:
+            # This will happen when we cannot find an unambiguous command or
+            # any command at all.
+            sublime.status_message("SublimeHg: Command not found.")
+        except AmbiguousCommandError:
+            sublime.status_message("SublimeHg: Ambiguous command.")
 
     def on_done(self, s):
         # FIXME: won't work with short aliases like st, etc.
         self.display_name = self.display_name or s.split(' ')[0]
 
         try:
-            hgs = HgCommandServer(get_hg_exe_name(), cwd=self.cwd)
+            hgs = HgCommandServer(hg_utils.get_hg_exe_name(), cwd=self.cwd)
         except EnvironmentError, e:
             sublime.status_message("SublimeHg:err:" + str(e))
             return
@@ -179,7 +187,7 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
             sublime.status_message("SublimeHg:err: Cannot start server here.")
             return
 
-        # FIXME: some long-running commands block an never exit. timeout?
+        # FIXME: some long-eunning commands block an never exit. timeout?
         if getattr(self, 'worker', None) and self.worker.is_alive():
             sublime.status_message("SublimeHg: Processing another request. "
                                    "Try again later.")
@@ -206,22 +214,32 @@ class ShowSublimeHgMenuCommand(sublime_plugin.TextCommand):
         if s == -1: return
 
         hg_cmd = HG_COMMANDS_AND_SHORT_HELP[s][0]
-        alt_cmd_name, extra_prompt = HG_COMMANDS[hg_cmd].format_str, \
-                                        HG_COMMANDS[hg_cmd].prompt
+        format_str , cmd_data = find_cmd(hg_cmd)
 
         fn = self.view.file_name()
-        env = {"file_name": fn}
+        env = {'file_name': fn}
 
-        if alt_cmd_name:
-            if extra_prompt:
-                env.update({"caption": extra_prompt, "fmtstr": alt_cmd_name})
-                self.view.run_command("hg_command_asking", env)
+        # Handle commands differently whether they require input or not.
+        # Commands requiring input have a "format_str".
+        if format_str:
+            # Collect single-line inputs from an input panel.
+            if '%(input)s' in format_str:
+                env['caption'] = cmd_data.prompt
+                env['fmtstr'] = format_str
+                self.view.run_command('hg_command_asking', env)
                 return
-            self.view.run_command("hg_command_runner", {"cmd": alt_cmd_name % env,
-                                                  "display_name": hg_cmd})
+
+            # Command requires additional info, but it's provided automatically.
+            self.view.run_command('hg_command_runner', {
+                                              'cmd': format_str % env,
+                                              'display_name': hg_cmd})
         else:
-            self.view.run_command("hg_command_runner", {"cmd": hg_cmd,
-                                                  "display_name": hg_cmd})
+            # It's a simple command that doesn't require any input, so just
+            # go ahead and run it.
+            self.view.run_command('hg_command_runner', {
+                                              'cmd': hg_cmd,
+                                              'display_name': hg_cmd})
+
 
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
@@ -246,7 +264,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
 
 
 # XXX not ideal; missing commands
-COMPLETIONS = HG_COMMANDS_LIST + ['!h', '!mkh']
+COMPLETIONS = HG_COMMANDS_LIST
 
 
 class HgCompletionsProvider(sublime_plugin.EventListener):
