@@ -86,15 +86,6 @@ HG_COMMANDS = {
                     help='list repository named branches',
                     flags=0,
                     ),
-    'commit': cmd_data(
-                    invocations={'commit (this file)': 'commit "%(file_name)s" -m "%(input)s"',
-                        },
-                    prompt='Commit message:',
-                    enabled=True,
-                    syntax_file='',
-                    help='commit the specified files or all outstanding changes',
-                    flags=0,
-                    ),
     'diff': cmd_data(
                     invocations={'diff (this file)': 'diff "%(file_name)s"',
                                  'diff': 'diff',
