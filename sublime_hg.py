@@ -7,15 +7,13 @@ import threading
 import functools
 import subprocess
 
-import hglib
-from hglib.error import ServerError
-
-from hg_commands import HG_COMMANDS_LIST
-from hg_commands import HG_COMMANDS_AND_SHORT_HELP
-from hg_commands import find_cmd
 from hg_commands import AmbiguousCommandError
 from hg_commands import CommandNotFoundError
+from hg_commands import find_cmd
+from hg_commands import HG_COMMANDS_AND_SHORT_HELP
+from hg_commands import HG_COMMANDS_LIST
 from hg_commands import RUN_IN_OWN_CONSOLE
+import hg_client
 import hg_utils
 
 
@@ -34,62 +32,55 @@ recent_file_name = None
 #==============================================================================
 
 
-class HgCommandServer(object):
-    """I drive a Mercurial command server (Mercurial>=1.9).
-
-    For a description of the Mercurial command server see:
-        * http://mercurial.selenic.com/wiki/CommandServer
-
-    This class uses the hglib library to manage the command server.
+def start_server(repo_root):
+    """Starts a new Mercurial command server.
     """
-    def __init__(self, hg_exe='hg', cwd=None):
-        global running_server
+    # By default, hglib uses 'hg'. User might need to change that on
+    # Windows, for example.
+    hg_bin = hg_utils.get_hg_exe_name()
+    server = hg_client.CmdServerClient(hg_bin=hg_bin, repo_root=repo_root)
+    global running_servers
+    running_servers[repo_root] = server
+    return server
 
-        # Reuse existing server or start one.
-        self.hg_exe = hg_exe
-        self.cwd = cwd
-        v = sublime.active_window().active_view()
-        self.current_repo = hg_utils.find_hg_root(cwd or v.file_name())
-        if not self.current_repo in running_servers:
-            self.start_server(hg_exe)
-        else:
-            self.server = running_servers[self.current_repo]
-        # running_server = self.server
 
-    def start_server(self, hg_exe):
-        # By default, hglib uses 'hg'. User might need to change that on
-        # Windows, for example.
-        hglib.HGPATH = hg_exe
-        self.server = hglib.open(path=self.current_repo)
-        global running_servers
-        running_servers[self.current_repo] = self.server
+def select_server(current_path=None):
+    """Finds an existing server for the given path. If none is found, it
+    creates one for the path.
+    """
+    v = sublime.active_window().active_view()
+    repo_root = hg_utils.find_hg_root(current_path or v.file_name())
+    assert repo_root, "No repo found here."
+    if not repo_root in running_servers:
+        return start_server(repo_root)
+    else:
+        return running_servers[repo_root]
 
-    def run_command(self, *args):
-        # XXX We should probably use hglib's own utility funcs.
-        if len(args) == 1 and ' ' in args[0]:
-            args = shlex.split(args[0])
 
-        if args[0] == 'hg':
-            print "SublimeHg:inf: Stripped superfluous 'hg' from '%s'" % \
-                                                                ' '.join(args)
-            args = args[1:]
+def run_hg_cmd(server, cmd_string):
+    """Runs a Mercurial command through the given command server.
+    """
+    # Force strings into bytestrings; shlex doesn't support unicode.
+    # TODO: handle commit messages in unicode.
+    args = shlex.split(str(cmd_string))
+    if args[0] == 'hg':
+        print "SublimeHg:inf: Stripped superfluous 'hg' from command."
+        args = args[1:]
 
-        print "SublimeHg:inf: Sending command '%s' as %s" % \
-                                                        (' '.join(args), args)
-        try:
-            ret = self.server.rawcommand(args)
-            return ret
-        except hglib.error.CommandError, e:
-            print "SublimeHg:err: " + str(e)
-            return str(e)
+    print "SublimeHg:inf: Sending command '%s' as %s" % (args, args)
+    server.run_command(args)
+    text, exit_code = server.receive_data()
+    if exit_code == 0:
+        return text
 
 
 class CommandRunnerWorker(threading.Thread):
     """Runs the Mercurial command and reports the output.
     """
-    def __init__(self, hgs, command, view, fname, display_name, append=False):
+    def __init__(self, command_server, command, view,
+                 fname, display_name, append=False):
         threading.Thread.__init__(self)
-        self.hgs = hgs
+        self.command_server = command_server
         self.command = command
         self.view = view
         self.fname = fname
@@ -100,13 +91,18 @@ class CommandRunnerWorker(threading.Thread):
     def run(self):
         if hg_utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
             if sublime.platform() == 'windows':
-                subprocess.Popen([self.hgs.hg_exe, self.command.encode(self.hgs.server.encoding)])
+                subprocess.Popen([self.command_server.hg_exe,
+                                  self.command.encode(self.command_server.server.encoding)])
             elif sublime.platform() == 'linux':
+                # This is completely wrong for retrieving the user's preferred
+                # terminal. Actually, it seems it isn't possible in a general
+                # way for different distros:
+                # http://unix.stackexchange.com/questions/32547/how-to-launch-an-application-with-default-terminal-emulator-on-ubuntu
                 term = os.path.expandvars("$TERM")
                 if term:
                     # At the moment, only hg serve goes this path.
                     # TODO: if port is in use, the command will fail.
-                    cmd = [term, '-e', self.hgs.hg_exe, self.command]
+                    cmd = [term, '-e', self.command_server.hg_exe, self.command]
                     subprocess.Popen(cmd)
                 else:
                     sublime.status_message("SublimeHg: No terminal found.")
@@ -117,8 +113,7 @@ class CommandRunnerWorker(threading.Thread):
             return
 
         try:
-            command = self.command
-            data = self.hgs.run_command(command.encode(self.hgs.server.encoding))
+            data = run_hg_cmd(self.command_server, self.command)
             sublime.set_timeout(functools.partial(self.show_output, data), 0)
         except UnicodeDecodeError, e:
             print "SublimeHg: Can't handle command string characters."
@@ -127,7 +122,7 @@ class CommandRunnerWorker(threading.Thread):
     def show_output(self, data):
         # If we're appending to the console, do it even if there's no data.
         if data or self.append:
-            self.create_output(data.decode(self.hgs.server.encoding))
+            self.create_output(data.decode(self.command_server.encoding))
             # Make sure we know when to restore the cmdline later.
             global recent_file_name
             recent_file_name = self.view.file_name()
@@ -178,13 +173,9 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
         self.display_name = self.display_name or s.split(' ')[0]
 
         try:
-            hgs = HgCommandServer(hg_utils.get_hg_exe_name(), cwd=self.cwd)
+            hgs = select_server(current_path=self.cwd)
         except EnvironmentError, e:
             sublime.status_message("SublimeHg:err:" + str(e))
-            return
-        except ServerError:
-            # we can't find any repository
-            sublime.status_message("SublimeHg:err: Cannot start server here.")
             return
 
         # FIXME: some long-eunning commands block an never exit. timeout?
@@ -243,6 +234,8 @@ class ShowSublimeHgMenuCommand(sublime_plugin.TextCommand):
 
 
 class HgCommandAskingCommand(sublime_plugin.TextCommand):
+    """Asks the user for missing output and runs a Mercurial command.
+    """
     def run(self, edit, caption='', fmtstr='', **kwargs):
         self.fmtstr = fmtstr
         self.content = kwargs
@@ -267,6 +260,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
 COMPLETIONS = HG_COMMANDS_LIST
 
 
+#_____________________________________________________________________________
 class HgCompletionsProvider(sublime_plugin.EventListener):
     CACHED_COMPLETIONS = []
     CACHED_COMPLETION_PREFIXES = []
