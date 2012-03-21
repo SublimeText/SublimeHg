@@ -3,13 +3,10 @@ import os
 
 
 def get_hg_exe_name():
+    # todo: update this to read the view's settings instead so that it works
+    # as expected with project settings, etc.
     settings = sublime.load_settings('Global.sublime-settings')
     return settings.get('packages.sublime_hg.hg_exe') or 'hg'
-
-
-def use_hg_editor():
-    return sublime.load_settings(
-                'SublimeHg.sublime-settings').get('use_hg_editor', False)
 
 
 def find_hg_root(path):
