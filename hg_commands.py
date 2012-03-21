@@ -369,7 +369,15 @@ HG_COMMANDS = {
                     prompt='',
                     enabled=True,
                     syntax_file='',
-                    help='',
+                    help='start stand-alone webserver',
+                    flags=RUN_IN_OWN_CONSOLE,
+                    ),
+    "init": cmd_data(
+                    invocations={"init (this file's directory)": "init"},
+                    prompt='',
+                    enabled=True,
+                    syntax_file='',
+                    help='create a new repository in the given directory',
                     flags=RUN_IN_OWN_CONSOLE,
                     ),
 }

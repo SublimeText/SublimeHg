@@ -8,6 +8,10 @@ def get_hg_exe_name():
     settings = sublime.load_settings('Global.sublime-settings')
     return settings.get('packages.sublime_hg.hg_exe') or 'hg'
 
+def get_preferred_terminal():
+    settings = sublime.load_settings('Global.sublime-settings')
+    return settings.get('packages.sublime_hg.terminal') or ''
+
 
 def find_hg_root(path):
     # XXX check whether .hg is a dir too

@@ -85,7 +85,6 @@ class CommandRunnerWorker(threading.Thread):
         self.view = view
         self.fname = fname
         self.command_data = find_cmd(display_name)[1]
-
         self.append = append
 
     def run(self):
@@ -94,19 +93,17 @@ class CommandRunnerWorker(threading.Thread):
                 subprocess.Popen([self.command_server.hg_bin,
                                   self.command.encode(self.command_server.encoding)])
             elif sublime.platform() == 'linux':
-                # This is completely wrong for retrieving the user's preferred
-                # terminal. Actually, it seems it isn't possible in a general
-                # way for different distros:
+                # Apparently it isn't possible to retrieve the preferred
+                # terminal in a general way for different distros:
                 # http://unix.stackexchange.com/questions/32547/how-to-launch-an-application-with-default-terminal-emulator-on-ubuntu
-                term = os.path.expandvars("$TERM")
+                term = hg_utils.get_preferred_terminal()
                 if term:
-                    # At the moment, only hg serve goes this path.
-                    # TODO: if port is in use, the command will fail.
                     cmd = [term, '-e', self.command_server.hg_bin, self.command]
                     subprocess.Popen(cmd)
                 else:
                     sublime.status_message("SublimeHg: No terminal found.")
-                    print "SublimeHg: No terminal found."
+                    print "SublimeHg: No terminal found. You might want to" \
+                          "add packages.sublime_hg.terminal to your settings."
             else:
                 sublime.status_message("SublimeHg: Not implemented.")
                 print "SublimeHg: Not implemented. " + self.command
