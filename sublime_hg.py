@@ -91,8 +91,8 @@ class CommandRunnerWorker(threading.Thread):
     def run(self):
         if hg_utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
             if sublime.platform() == 'windows':
-                subprocess.Popen([self.command_server.hg_exe,
-                                  self.command.encode(self.command_server.server.encoding)])
+                subprocess.Popen([self.command_server.hg_bin,
+                                  self.command.encode(self.command_server.encoding)])
             elif sublime.platform() == 'linux':
                 # This is completely wrong for retrieving the user's preferred
                 # terminal. Actually, it seems it isn't possible in a general
@@ -102,7 +102,7 @@ class CommandRunnerWorker(threading.Thread):
                 if term:
                     # At the moment, only hg serve goes this path.
                     # TODO: if port is in use, the command will fail.
-                    cmd = [term, '-e', self.command_server.hg_exe, self.command]
+                    cmd = [term, '-e', self.command_server.hg_bin, self.command]
                     subprocess.Popen(cmd)
                 else:
                     sublime.status_message("SublimeHg: No terminal found.")

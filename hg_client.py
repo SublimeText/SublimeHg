@@ -2,6 +2,7 @@
 
 import subprocess
 import struct
+import os
 
 CH_DEBUG = 'd'
 CH_ERROR = 'e'
@@ -13,11 +14,17 @@ CH_RETVAL = 'r'
 
 def start_server(hg_bin, repo_root, **kwargs):
 	"""Returns a command server ready to be used."""
+	startup_info = None
+	if os.name == 'nt':
+		startup_info = subprocess.STARTUPINFO()
+		startup_info.dwFlags = subprocess.STARTF_USESHOWWINDOW
+
 	return subprocess.Popen([hg_bin, "serve", "--cmdserver", "pipe",
 							 "--repository", repo_root,
 							 "--config", "ui.interactive=False"],
 							 stdin=subprocess.PIPE,
-							 stdout=subprocess.PIPE)
+							 stdout=subprocess.PIPE,
+							 startupinfo=startup_info)
 
 
 def init_repo(root):
@@ -26,6 +33,7 @@ def init_repo(root):
 
 class CmdServerClient(object):
 	def __init__(self, repo_root, hg_bin='hg'):
+		self.hg_bin = hg_bin
 		self.server = start_server(hg_bin, repo_root)
 		self.read_greeting()
 
