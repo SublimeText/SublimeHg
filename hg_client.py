@@ -28,6 +28,7 @@ class CmdServerClient(object):
 	def __init__(self, repo_root, hg_bin='hg'):
 		self.server = start_server(hg_bin, repo_root)
 		self.read_greeting()
+		self.hg_bin = hg_bin
 
 	def shut_down(self):
 		self.server.stdin.close()
