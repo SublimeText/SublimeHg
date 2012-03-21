@@ -17,7 +17,7 @@ import hg_client
 import hg_utils
 
 
-VERSION = '12.3.16'
+VERSION = '12.4.21'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
