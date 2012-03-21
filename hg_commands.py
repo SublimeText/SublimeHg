@@ -17,7 +17,7 @@ RUN_IN_OWN_CONSOLE = 0x02
 HG_COMMANDS = {
     'commit': cmd_data(
                     invocations={'commit...': 'commit -m "%(input)s"',
-                                 'commit (this file)': 'commit "%(file_name)s" -m "%(input)s"',
+                                 'commit... (this file)': 'commit "%(file_name)s" -m "%(input)s"',
                                 },
                     prompt='Commit message:',
                     enabled=True,
