@@ -23,6 +23,9 @@ Getting Started
 Configuration
 =============
 
+Mercurial Executable
+--------------------
+
 By default, the executable name for Mercurial is ``hg``. If you need to use a
 different one, such as ``hg.bat``, change the variable ``packages.sublime_hg.hg_exe``
 to it in **Preferences | Global Settings - User**.
@@ -32,6 +35,12 @@ Example::
    {
       "packages.sublime_hg.hg_exe": "hg.bat"
    }
+
+Preferred Terminal Emulator (Linux)
+-----------------------------------
+
+The setting `packages.sublime_hg.terminal` determines the terminal emulator to
+be used in Linux. This is necessary so that commands such as *serve* work.
 
 
 How to Use

@@ -1,7 +1,6 @@
 import sublime
 import sublime_plugin
 
-import os
 import shlex
 import threading
 import functools
