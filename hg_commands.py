@@ -383,7 +383,6 @@ HG_COMMANDS = {
 }
 
 # At some point we'll let the user choose whether to load extensions.
-# FIXME! - re-enable this.
 if True:
     MQ_CMDS = {
         "qapplied": cmd_data(
