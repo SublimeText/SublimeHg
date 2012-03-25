@@ -3,9 +3,9 @@ import sublime
 
 import os
 
-from hg_commands import find_cmd
-from hg_commands import CommandNotFoundError
-from hg_commands import AmbiguousCommandError
+from shglib.commands import find_cmd
+from shglib.commands import CommandNotFoundError
+from shglib.commands import AmbiguousCommandError
 
 
 CLI_BUFFER_NAME = '==| SublimeHg Console |=='
@@ -92,7 +92,9 @@ class SublimeHgSendLine(sublime_plugin.TextCommand):
             cmd = cmd[1:].strip()
 
         try:
-            format_string, actual_cmd = find_cmd(cmd.split()[0])
+            # TODO: abstract out settings handling.
+            extensions = self.view.settings().get('packages.sublime_hg.extensions', [])
+            format_string, actual_cmd = find_cmd(extensions, cmd.split()[0])
         except CommandNotFoundError:
             self.append_output("SublimeHg: Command not found.")
             sublime.status_message("SublimeHg: Command not found.")

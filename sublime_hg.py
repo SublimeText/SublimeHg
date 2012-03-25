@@ -6,17 +6,19 @@ import threading
 import functools
 import subprocess
 
-from hg_commands import AmbiguousCommandError
-from hg_commands import CommandNotFoundError
-from hg_commands import find_cmd
-from hg_commands import HG_COMMANDS_AND_SHORT_HELP
-from hg_commands import HG_COMMANDS_LIST
-from hg_commands import RUN_IN_OWN_CONSOLE
-import hg_client
-import hg_utils
+from shglib import client
+from shglib import commands
+from shglib import utils
+from shglib.commands import AmbiguousCommandError
+from shglib.commands import CommandNotFoundError
+from shglib.commands import find_cmd
+from shglib.commands import get_commands_by_ext
+from shglib.commands import HG_COMMANDS_AND_SHORT_HELP
+from shglib.commands import HG_COMMANDS_LIST
+from shglib.commands import RUN_IN_OWN_CONSOLE
 
 
-VERSION = '12.4.21'
+VERSION = '12.4.25'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
@@ -36,8 +38,8 @@ def start_server(repo_root):
     """
     # By default, hglib uses 'hg'. User might need to change that on
     # Windows, for example.
-    hg_bin = hg_utils.get_hg_exe_name()
-    server = hg_client.CmdServerClient(hg_bin=hg_bin, repo_root=repo_root)
+    hg_bin = utils.get_hg_exe_name()
+    server = client.CmdServerClient(hg_bin=hg_bin, repo_root=repo_root)
     global running_servers
     running_servers[repo_root] = server
     return server
@@ -48,7 +50,7 @@ def select_server(current_path=None):
     creates one for the path.
     """
     v = sublime.active_window().active_view()
-    repo_root = hg_utils.find_hg_root(current_path or v.file_name())
+    repo_root = utils.find_hg_root(current_path or v.file_name())
     assert repo_root, "No repo found here."
     if not repo_root in running_servers:
         return start_server(repo_root)
@@ -83,11 +85,12 @@ class CommandRunnerWorker(threading.Thread):
         self.command = command
         self.view = view
         self.fname = fname
-        self.command_data = find_cmd(display_name)[1]
+        extensions = view.settings().get('packages.sublime_hg.extensions', [])
+        self.command_data = find_cmd(extensions, display_name)[1]
         self.append = append
 
     def run(self):
-        if hg_utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
+        if utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
             if sublime.platform() == 'windows':
                 subprocess.Popen([self.command_server.hg_bin,
                                   self.command.encode(self.command_server.encoding)])
@@ -95,7 +98,7 @@ class CommandRunnerWorker(threading.Thread):
                 # Apparently it isn't possible to retrieve the preferred
                 # terminal in a general way for different distros:
                 # http://unix.stackexchange.com/questions/32547/how-to-launch-an-application-with-default-terminal-emulator-on-ubuntu
-                term = hg_utils.get_preferred_terminal()
+                term = utils.get_preferred_terminal()
                 if term:
                     cmd = [term, '-e', self.command_server.hg_bin, self.command]
                     subprocess.Popen(cmd)
@@ -190,18 +193,25 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
 
 
 class ShowSublimeHgMenuCommand(sublime_plugin.TextCommand):
+    CMDS_FOR_DISPLAY = None
+
     def is_enabled(self):
         return self.view.file_name()
 
     def run(self, edit):
-        self.view.window().show_quick_panel(HG_COMMANDS_AND_SHORT_HELP,
+        if not self.CMDS_FOR_DISPLAY:
+            extensions = self.view.settings().get('packages.sublime_hg.extensions', [])
+            self.CMDS_FOR_DISPLAY = get_commands_by_ext(extensions)
+
+        self.view.window().show_quick_panel(self.CMDS_FOR_DISPLAY,
                                             self.on_done)
 
     def on_done(self, s):
         if s == -1: return
 
-        hg_cmd = HG_COMMANDS_AND_SHORT_HELP[s][0]
-        format_str , cmd_data = find_cmd(hg_cmd)
+        hg_cmd = self.CMDS_FOR_DISPLAY[s][0]
+        extensions = self.view.settings().get('packages.sublime_hg.extensions', [])
+        format_str , cmd_data = find_cmd(extensions, hg_cmd)
 
         fn = self.view.file_name()
         env = {'file_name': fn}
@@ -260,11 +270,23 @@ COMPLETIONS = HG_COMMANDS_LIST
 class HgCompletionsProvider(sublime_plugin.EventListener):
     CACHED_COMPLETIONS = []
     CACHED_COMPLETION_PREFIXES = []
+    COMPLETIONS = []
+
+    def load_completions(self, view):
+        extensions = view.settings().get('packages.sublime_hg.extensions', [])
+        extensions.insert(0, 'default')
+        self.COMPLETIONS = []
+        for ext in extensions:
+            self.COMPLETIONS.extend(commands.HG_COMMANDS[ext].keys())
+        self.COMPLETIONS = set(sorted(self.COMPLETIONS))
 
     def on_query_completions(self, view, prefix, locations):
         # Only provide completions to the SublimeHg command line.
         if view.score_selector(0, 'source.sublime_hg_cli') == 0:
             return []
+
+        if not self.COMPLETIONS:
+            self.load_completions(view)
 
         # Only complete top level commands.
         current_line = view.substr(view.line(view.size()))[2:]
@@ -274,7 +296,7 @@ class HgCompletionsProvider(sublime_plugin.EventListener):
         if prefix and prefix in self.CACHED_COMPLETION_PREFIXES:
             return self.CACHED_COMPLETIONS
 
-        new_completions = [x for x in COMPLETIONS if x.startswith(prefix)]
+        new_completions = [x for x in self.COMPLETIONS if x.startswith(prefix)]
         self.CACHED_COMPLETION_PREFIXES = [prefix] + new_completions
         self.CACHED_COMPLETIONS = zip([prefix] + new_completions,
                                                     new_completions + [prefix])

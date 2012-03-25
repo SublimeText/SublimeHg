@@ -14,7 +14,10 @@ cmd_data = namedtuple('cmd_data','invocations prompt enabled syntax_file help fl
 # Flags
 RUN_IN_OWN_CONSOLE = 0x02
 
-HG_COMMANDS = {
+HG_COMMANDS = {}
+
+
+HG_COMMANDS['default'] = {
     'commit': cmd_data(
                     invocations={'commit...': 'commit -m "%(input)s"',
                                  'commit... (this file)': 'commit "%(file_name)s" -m "%(input)s"',
@@ -24,6 +27,15 @@ HG_COMMANDS = {
                     syntax_file='',
                     help='commit the specified files or all outstanding changes',
                     flags=0,
+                    ),
+    'init': cmd_data(
+                    invocations={'init': 'init',
+                                },
+                    prompt='',
+                    enabled=True,
+                    syntax_file='',
+                    help='create a new repository in the given directory',
+                    flags=RUN_IN_OWN_CONSOLE,
                     ),
     'add': cmd_data(
                     invocations={'add (this file)': 'add "%(file_name)s"',
@@ -383,8 +395,7 @@ HG_COMMANDS = {
 }
 
 # At some point we'll let the user choose whether to load extensions.
-if True:
-    MQ_CMDS = {
+HG_COMMANDS['mq'] = {
         "qapplied": cmd_data(
                         invocations={'qapplied': 'qapplied -s',
                                    },
@@ -529,12 +540,10 @@ if True:
                         ),
     }
 
-    HG_COMMANDS.update(MQ_CMDS)
 
-
-def format_for_display():
+def format_for_display(extension):
     all_cmds = []
-    for name, cmd_data in HG_COMMANDS.iteritems():
+    for name, cmd_data in HG_COMMANDS[extension].iteritems():
         if cmd_data.invocations:
             for display_name, invocation in cmd_data.invocations.iteritems():
                 all_cmds.append([display_name, cmd_data.help])
@@ -544,17 +553,20 @@ def format_for_display():
     return sorted(all_cmds, key=lambda x: x[0])
 
 
-def find_cmd(search_term):
+def find_cmd(extensions, search_term):
     candidates = []
-    for name, cmd_data in HG_COMMANDS.iteritems():
-        if search_term in cmd_data.invocations:
-            return cmd_data.invocations[search_term], cmd_data
-            break
-        elif search_term == name:
-            return name, cmd_data
-            break
-        elif name.startswith(search_term):
-            candidates.append((name, cmd_data))
+    extensions.insert(0, 'default')
+    for ext in extensions:
+        cmds = HG_COMMANDS[ext]
+        for name, cmd_data in cmds.iteritems():
+            if search_term in cmd_data.invocations:
+                return cmd_data.invocations[search_term], cmd_data
+                break
+            elif search_term == name:
+                return name, cmd_data
+                break
+            elif name.startswith(search_term):
+                candidates.append((name, cmd_data))
 
     if len(candidates) == 1:
         return candidates[0]
@@ -564,7 +576,16 @@ def find_cmd(search_term):
     else:
         raise CommandNotFoundError
 
+def get_commands_by_ext(extensions):
+    cmds = []
+    for ext in extensions:
+        if not ext.lower() == 'default':
+            cmds.extend(format_for_display(ext))
+    # Make sure we return at least 'default' commands.
+    cmds = format_for_display('default') + cmds
+    return cmds
 
-HG_COMMANDS_AND_SHORT_HELP = format_for_display()
+
+HG_COMMANDS_AND_SHORT_HELP = format_for_display("default")
 HG_COMMANDS_LIST = [x.replace('.', '') for x in HG_COMMANDS if ' ' not in x]
 HG_COMMANDS_LIST = list(sorted(set(HG_COMMANDS_LIST)))
