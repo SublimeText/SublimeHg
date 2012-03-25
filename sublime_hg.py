@@ -13,7 +13,6 @@ from shglib.commands import AmbiguousCommandError
 from shglib.commands import CommandNotFoundError
 from shglib.commands import find_cmd
 from shglib.commands import get_commands_by_ext
-from shglib.commands import HG_COMMANDS_AND_SHORT_HELP
 from shglib.commands import HG_COMMANDS_LIST
 from shglib.commands import RUN_IN_OWN_CONSOLE
 
