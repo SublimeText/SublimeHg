@@ -46,6 +46,11 @@ Possible options in **Preferences | Settings - User**.
 	Determines the terminal emulator to be used in Linux. This is necessary so
 	that commands such as *serve* work.
 
+``packages.sublime_hg.extensions``
+
+	A list of Mercurial extension names. Commands belonging to these extensions
+	will show up in the command menu along with built-in Mercurial commands.
+
 
 How to Use
 ==========
