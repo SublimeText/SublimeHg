@@ -248,7 +248,7 @@ HG_COMMANDS['default'] = {
                     flags=0,
                     ),
     "remove": cmd_data(
-                    invocations={'remove (this file)': 'remove "%(input)s"',
+                    invocations={'remove (this file)': 'remove "%(file_name)s"',
                         },
                     prompt='',
                     enabled=True,
