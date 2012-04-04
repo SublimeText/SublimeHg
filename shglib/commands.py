@@ -227,7 +227,7 @@ HG_COMMANDS['default'] = {
                     enabled=True,
                     syntax_file='',
                     help='pull changes from the specified source',
-                    flags=0,
+                    flags=RUN_IN_OWN_CONSOLE,
                     ),
     "push": cmd_data(
                     invocations={'push...': 'push "%(input)s"',
@@ -237,7 +237,7 @@ HG_COMMANDS['default'] = {
                     enabled=True,
                     syntax_file='',
                     help='push changes to the specified destination',
-                    flags=0,
+                    flags=RUN_IN_OWN_CONSOLE,
                     ),
     "recover": cmd_data(
                     invocations={},
