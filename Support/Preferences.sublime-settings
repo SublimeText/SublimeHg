@@ -1,0 +1,8 @@
+{
+	// List of extensions whose commands will be listed in the command quick
+	// panel (for example, "mq").
+	"packages.sublime_hg.extensions": [],
+
+	// Terminal emulator to be used on Linux.
+	"packages.sublime_hg.terminal": "lxterminal"
+}

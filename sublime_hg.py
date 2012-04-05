@@ -99,8 +99,8 @@ class CommandRunnerWorker(threading.Thread):
                 # http://unix.stackexchange.com/questions/32547/how-to-launch-an-application-with-default-terminal-emulator-on-ubuntu
                 term = utils.get_preferred_terminal()
                 if term:
-                    cmd = [term, '-e', self.command_server.hg_bin, self.command]
-                    subprocess.Popen(cmd)
+                    cmd_str = "bash -c '%s %s;read'" % (self.command_server.hg_bin, self.command)
+                    subprocess.Popen([term, '-e', cmd_str]).wait()
                 else:
                     sublime.status_message("SublimeHg: No terminal found.")
                     print "SublimeHg: No terminal found. You might want to" \
