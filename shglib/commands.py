@@ -158,7 +158,7 @@ HG_COMMANDS['default'] = {
                     enabled=True,
                     syntax_file='',
                     help='show new changesets found in source',
-                    flags=0,
+                    flags=RUN_IN_OWN_CONSOLE,
                     ),
     'locate': cmd_data(
                     invocations={'locate': 'locate "%(input)s"'
@@ -203,7 +203,7 @@ HG_COMMANDS['default'] = {
                     enabled=True,
                     syntax_file='Packages/SublimeHg/Support/Mercurial Log.hidden-tmLanguage',
                     help='show changesets not found in the destination',
-                    flags=0,
+                    flags=RUN_IN_OWN_CONSOLE,
                     ),
     'parents': cmd_data(
                     invocations={},
