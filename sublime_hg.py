@@ -91,8 +91,8 @@ class CommandRunnerWorker(threading.Thread):
     def run(self):
         if utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
             if sublime.platform() == 'windows':
-                subprocess.Popen([self.command_server.hg_bin,
-                                  self.command.encode(self.command_server.encoding)])
+                cmd_str = "%s %s && pause" % (self.command_server.hg_bin, self.command.encode(self.command_server.encoding))
+                subprocess.Popen(["cmd.exe", "/c", cmd_str,])
             elif sublime.platform() == 'linux':
                 # Apparently it isn't possible to retrieve the preferred
                 # terminal in a general way for different distros:
@@ -100,7 +100,7 @@ class CommandRunnerWorker(threading.Thread):
                 term = utils.get_preferred_terminal()
                 if term:
                     cmd_str = "bash -c '%s %s;read'" % (self.command_server.hg_bin, self.command)
-                    subprocess.Popen([term, '-e', cmd_str]).wait()
+                    subprocess.Popen([term, '-e', cmd_str])
                 else:
                     sublime.status_message("SublimeHg: No terminal found.")
                     print "SublimeHg: No terminal found. You might want to" \
