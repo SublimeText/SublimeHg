@@ -120,7 +120,8 @@ class CommandRunnerWorker(threading.Thread):
     def show_output(self, data):
         # If we're appending to the console, do it even if there's no data.
         if data or self.append:
-            self.create_output(data.decode(self.command_server.encoding))
+            self.create_output(data)
+
             # Make sure we know when to restore the cmdline later.
             global recent_file_name
             recent_file_name = self.view.file_name()
