@@ -75,6 +75,25 @@ def run_hg_cmd(server, cmd_string):
         return text
 
 
+class KillHgServerCommand(sublime_plugin.TextCommand):
+    """Shut down the server for the current file if it's running.
+
+    The Mercurial command server does not detect state changes in the repo
+    originating outside the command server itself (such as from a separate
+    command line). This command makes it easy to restart the server so that
+    the newest changes are picked up.
+    """
+    def run(self, edit):
+        repo_root = None
+        if self.view.file_name():
+            repo_root = utils.find_hg_root(self.view.file_name())
+        if repo_root:
+            running_servers[repo_root].shut_down()
+            del running_servers[repo_root]
+        else:
+            sublime.status_message("SublimeHg: No server found for this file.")
+
+
 class CommandRunnerWorker(threading.Thread):
     """Runs the Mercurial command and reports the output.
     """

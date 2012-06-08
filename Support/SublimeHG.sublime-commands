@@ -1,4 +1,5 @@
 [
 	{ "caption": "SublimeHg: Open Menu", "command": "show_sublime_hg_menu" },
-	{ "caption": "SublimeHg: Open CLI", "command": "show_sublime_hg_cli" }
+	{ "caption": "SublimeHg: Open CLI", "command": "show_sublime_hg_cli" },
+	{ "caption": "SublimeHg: Kill Servers", "command": "kill_hg_server" }
 ]
