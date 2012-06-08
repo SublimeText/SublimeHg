@@ -23,10 +23,7 @@ Getting Started
 Configuration
 =============
 
-Mercurial Executable
---------------------
-
-Possible options in **Preferences | Settings - User**.
+Available options in **Preferences | Settings - User**.
 
 ``packages.sublime_hg.hg_exe``
 
@@ -72,6 +69,13 @@ Normally, you will follow these steps to use SublimeHg:
 
 Alternatively, you can assign ``show_sublime_hg_cli`` and ``show_sublime_hg_menu``
 their own key bindings.
+
+Restarting The Current Server
+-----------------------------
+
+Sometimes you will need restart the current server so that external changes
+to the repository are picked up. To do that, choose Kill Current Server from
+the command palette.
 
 .. # History
 .. -------
