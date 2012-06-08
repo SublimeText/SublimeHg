@@ -50,7 +50,8 @@ def select_server(current_path=None):
     """
     v = sublime.active_window().active_view()
     repo_root = utils.find_hg_root(current_path or v.file_name())
-    assert repo_root, "No repo found here."
+    if not repo_root:
+        raise EnvironmentError("No repo found here.")
     if not repo_root in running_servers:
         return start_server(repo_root)
     else:
@@ -173,7 +174,7 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
         try:
             hgs = select_server(current_path=self.cwd)
         except EnvironmentError, e:
-            sublime.status_message("SublimeHg:err:" + str(e))
+            sublime.status_message("SublimeHg: " + str(e))
             return
 
         # FIXME: some long-eunning commands block an never exit. timeout?
