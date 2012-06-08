@@ -17,7 +17,7 @@ from shglib.commands import HG_COMMANDS_LIST
 from shglib.commands import RUN_IN_OWN_CONSOLE
 
 
-VERSION = '12.4.25'
+VERSION = '12.6.8'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
