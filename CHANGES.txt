@@ -1,7 +1,10 @@
+12.6.8
+	- add command to kill servers
+	- improve error handling when current view does not belong to any repo
 11.9.8
 	- tab completion for top level commands
 	- command history
-	
+
 11.9.3
 	- use hglib (by Mercurial team) as client for the command server
 	- shell is restored when originating view is re-focused

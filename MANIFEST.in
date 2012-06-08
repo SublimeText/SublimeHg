@@ -2,6 +2,8 @@ include *.py *.txt
 include *.sublime-* *.hidden-tmLanguage
 
 exclude setup.py
+exclude *.sublime-project
+exclude *.sublime-workspace
 exclude _*.txt
 exclude *.cache
 
