@@ -195,6 +195,10 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
         except EnvironmentError, e:
             sublime.status_message("SublimeHg: " + str(e))
             return
+        except Exception:
+            sublime.status_message("SublimeHg: Cannot start server."
+                                   "Your Mercurial version might be too old.")
+            return
 
         # FIXME: some long-eunning commands block an never exit. timeout?
         if getattr(self, 'worker', None) and self.worker.is_alive():
