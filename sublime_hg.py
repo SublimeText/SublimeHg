@@ -111,8 +111,8 @@ class CommandRunnerWorker(threading.Thread):
     def run(self):
         if utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
             if sublime.platform() == 'windows':
-                subprocess.Popen([self.command_server.hg_bin,
-                                  self.command.encode(self.command_server.encoding)])
+                cmd_str = "%s %s && pause" % (self.command_server.hg_bin, self.command.encode(self.command_server.encoding))
+                subprocess.Popen(["cmd.exe", "/c", cmd_str,])
             elif sublime.platform() == 'linux':
                 # Apparently it isn't possible to retrieve the preferred
                 # terminal in a general way for different distros:
@@ -120,7 +120,7 @@ class CommandRunnerWorker(threading.Thread):
                 term = utils.get_preferred_terminal()
                 if term:
                     cmd_str = "bash -c '%s %s;read'" % (self.command_server.hg_bin, self.command)
-                    subprocess.Popen([term, '-e', cmd_str]).wait()
+                    subprocess.Popen([term, '-e', cmd_str])
                 else:
                     sublime.status_message("SublimeHg: No terminal found.")
                     print "SublimeHg: No terminal found. You might want to" \
@@ -140,7 +140,8 @@ class CommandRunnerWorker(threading.Thread):
     def show_output(self, data):
         # If we're appending to the console, do it even if there's no data.
         if data or self.append:
-            self.create_output(data.decode(self.command_server.encoding))
+            self.create_output(data)
+
             # Make sure we know when to restore the cmdline later.
             global recent_file_name
             recent_file_name = self.view.file_name()
