@@ -10,3 +10,4 @@ exclude *.cache
 graft Doc
 prune dist
 prune data
+prune tests
