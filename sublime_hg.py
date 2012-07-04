@@ -71,8 +71,7 @@ def run_hg_cmd(server, cmd_string):
     print "SublimeHg:inf: Sending command '%s' as %s" % (args, args)
     server.run_command(args)
     text, exit_code = server.receive_data()
-    if exit_code == 0:
-        return text
+    return text, exit_code
 
 
 class KillHgServerCommand(sublime_plugin.TextCommand):
@@ -131,16 +130,16 @@ class CommandRunnerWorker(threading.Thread):
             return
 
         try:
-            data = run_hg_cmd(self.command_server, self.command)
-            sublime.set_timeout(functools.partial(self.show_output, data), 0)
+            data, exit_code = run_hg_cmd(self.command_server, self.command)
+            sublime.set_timeout(functools.partial(self.show_output, data, exit_code), 0)
         except UnicodeDecodeError, e:
             print "SublimeHg: Can't handle command string characters."
             print e
 
-    def show_output(self, data):
+    def show_output(self, data, exit_code):
         # If we're appending to the console, do it even if there's no data.
         if data or self.append:
-            self.create_output(data)
+            self.create_output(data, exit_code)
 
             # Make sure we know when to restore the cmdline later.
             global recent_file_name
@@ -150,7 +149,7 @@ class CommandRunnerWorker(threading.Thread):
         else:
             sublime.status_message("SublimeHg - No output.")
 
-    def create_output(self, data):
+    def create_output(self, data, exit_code):
         # Output to the console or to a separate buffer.
         if not self.append:
             p = self.view.window().new_file()

@@ -89,6 +89,7 @@ class CmdServerClient(object):
 			elif channel == CH_DEBUG:
 				print "debug:", data
 			elif channel == CH_ERROR:
+				lines.append(data.decode(self.encoding))
 				print "error:", data
 			elif channel in (CH_INPUT, CH_LINE_INPUT):
 				print "More data requested, can't satisfy."
