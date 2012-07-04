@@ -196,7 +196,8 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
         except EnvironmentError, e:
             sublime.status_message("SublimeHg: " + str(e))
             return
-        except Exception:
+        except Exception, e:
+            print str(e)
             sublime.status_message("SublimeHg: Cannot start server."
                                    "Your Mercurial version might be too old.")
             return

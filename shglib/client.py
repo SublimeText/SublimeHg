@@ -24,6 +24,10 @@ def start_server(hg_bin, repo_root, **kwargs):
 							 "--config", "ui.interactive=False"],
 							 stdin=subprocess.PIPE,
 							 stdout=subprocess.PIPE,
+							 # If we don't redirect stderr and the server does
+							 # not support an enabled extension, we won't be
+							 # able to read stdout.
+							 stderr=subprocess.PIPE,
 							 startupinfo=startup_info)
 
 
@@ -43,7 +47,9 @@ class CmdServerClient(object):
 
 	def read_channel(self):
 		# read channel name (1 byte) plus data length (4 bytes, BE)
-		ch, length = struct.unpack('>cI', self.server.stdout.read(5))
+		fmt = '>cI'
+		ch, length = struct.unpack(fmt,
+								   self.server.stdout.read(struct.calcsize(fmt)))
 		assert len(ch) == 1, "Expected channel name of length 1."
 		if ch in 'LI':
 			raise NotImplementedError("Can't provide more data to server.")
