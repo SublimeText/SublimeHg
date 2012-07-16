@@ -1,4 +1,4 @@
-﻿# encoding: utf-8
+# encoding: utf-8
 
 PACKAGE_VERSION = "12.7.4"
 
