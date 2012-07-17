@@ -230,7 +230,7 @@ HG_COMMANDS['default'] = {
                     flags=RUN_IN_OWN_CONSOLE,
                     ),
     "push": cmd_data(
-                    invocations={'push...': 'push "%(input)s"',
+                    invocations={'push...': 'push %(input)s',
                                  'push': 'push',
                         },
                     prompt="Push target:",
