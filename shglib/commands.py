@@ -408,7 +408,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='print the patches already applied',
                         flags=0,
                         ),
         "qdiff": cmd_data(
@@ -416,7 +416,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='Packages/Diff/Diff.tmLanguage',
-                        help='',
+                        help='diff of the current patch and subsequent modifications',
                         flags=0,
                         ),
         "qgoto": cmd_data(
@@ -425,7 +425,7 @@ HG_COMMANDS['mq'] = {
                         prompt="Patch name:",
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='push or pop patches until named patch is at top of stack',
                         flags=0,
                         ),
         "qheader": cmd_data(
@@ -435,7 +435,7 @@ HG_COMMANDS['mq'] = {
                         prompt="Patch name:",
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='print the header of the topmost or specified patch',
                         flags=0,
                         ),
         "qnext": cmd_data(
@@ -444,7 +444,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='print the name of the next pushable patch',
                         flags=0,
                         ),
         "qpop": cmd_data(
@@ -452,7 +452,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='pop the current patch off the stack',
                         flags=0,
                         ),
         "qprev": cmd_data(
@@ -461,7 +461,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='print the name of the preceding applied patch',
                         flags=0,
                         ),
         "qpush": cmd_data(
@@ -469,7 +469,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='push the next patch onto the stack',
                         flags=0,
                         ),
         "qrefresh": cmd_data(
@@ -480,7 +480,7 @@ HG_COMMANDS['mq'] = {
                         prompt='Commit message:',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='update the current patch',
                         flags=0,
                         ),
         "qfold": cmd_data(
@@ -488,7 +488,7 @@ HG_COMMANDS['mq'] = {
                         prompt='Patch name:',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='fold the named patches into the current patch',
                         flags=0,
                         ),
         "qseries": cmd_data(
@@ -497,7 +497,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='print the entire series file',
                         flags=0,
                         ),
         "qfinish": cmd_data(
@@ -506,7 +506,7 @@ HG_COMMANDS['mq'] = {
                         prompt='Patch name:',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='move applied patches into repository history',
                         flags=0,
                         ),
         "qnew": cmd_data(
@@ -515,16 +515,16 @@ HG_COMMANDS['mq'] = {
                         prompt='Patch name:',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='create a new patch',
                         flags=0,
                         ),
         "qdelete": cmd_data(
-                        invocations={'qdelete': 'qdelete "%(input)s"',
+                        invocations={'qdelete...': 'qdelete "%(input)s"',
                                        },
                         prompt='Patch name:',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='remove patches from queue',
                         flags=0,
                         ),
         "qtop": cmd_data(
@@ -533,7 +533,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='print the name of the current patch',
                         flags=0,
                         ),
         "qunapplied": cmd_data(
@@ -541,7 +541,7 @@ HG_COMMANDS['mq'] = {
                         prompt='',
                         enabled=True,
                         syntax_file='',
-                        help='',
+                        help='print the patches not yet applied',
                         flags=0,
                         ),
     }
