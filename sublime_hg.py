@@ -5,6 +5,7 @@ import shlex
 import threading
 import functools
 import subprocess
+import os
 
 from shglib import client
 from shglib import commands
@@ -109,25 +110,32 @@ class CommandRunnerWorker(threading.Thread):
 
     def run(self):
         if utils.is_flag_set(self.command_data.flags, RUN_IN_OWN_CONSOLE):
-            if sublime.platform() == 'windows':
-                cmd_str = "%s %s && pause" % (self.command_server.hg_bin, self.command.encode(self.command_server.encoding))
-                subprocess.Popen(["cmd.exe", "/c", cmd_str,])
-            elif sublime.platform() == 'linux':
-                # Apparently it isn't possible to retrieve the preferred
-                # terminal in a general way for different distros:
-                # http://unix.stackexchange.com/questions/32547/how-to-launch-an-application-with-default-terminal-emulator-on-ubuntu
-                term = utils.get_preferred_terminal()
-                if term:
-                    cmd_str = "bash -c '%s %s;read'" % (self.command_server.hg_bin, self.command)
-                    subprocess.Popen([term, '-e', cmd_str])
+            old_cwd = os.getcwdu()
+            # FIXME: what if self.fname is None?
+            target_dir = self.fname if os.path.isdir(self.fname) else os.path.dirname(self.fname)
+            os.chdir(target_dir)
+            try:
+                if sublime.platform() == 'windows':
+                    cmd_str = "%s %s && pause" % (self.command_server.hg_bin, self.command.encode(self.command_server.encoding))
+                    subprocess.Popen(["cmd.exe", "/c", cmd_str,])
+                elif sublime.platform() == 'linux':
+                    # Apparently it isn't possible to retrieve the preferred
+                    # terminal in a general way for different distros:
+                    # http://unix.stackexchange.com/questions/32547/how-to-launch-an-application-with-default-terminal-emulator-on-ubuntu
+                    term = utils.get_preferred_terminal()
+                    if term:
+                        cmd_str = "bash -c '%s %s;read'" % (self.command_server.hg_bin, self.command)
+                        subprocess.Popen([term, '-e', cmd_str])
+                    else:
+                        sublime.status_message("SublimeHg: No terminal found.")
+                        print "SublimeHg: No terminal found. You might want to" \
+                              "add packages.sublime_hg.terminal to your settings."
                 else:
-                    sublime.status_message("SublimeHg: No terminal found.")
-                    print "SublimeHg: No terminal found. You might want to" \
-                          "add packages.sublime_hg.terminal to your settings."
-            else:
-                sublime.status_message("SublimeHg: Not implemented.")
-                print "SublimeHg: Not implemented. " + self.command
-            return
+                    sublime.status_message("SublimeHg: Not implemented.")
+                    print "SublimeHg: Not implemented. " + self.command
+                return
+            finally:
+                os.chdir(old_cwd)
 
         try:
             data, exit_code = run_hg_cmd(self.command_server, self.command)
