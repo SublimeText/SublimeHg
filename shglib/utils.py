@@ -69,3 +69,7 @@ class HgServers(object):
         hg_bin = get_hg_exe_name()
         server = client.CmdServerClient(hg_bin=hg_bin, repo_root=repo_root)
         return server
+
+    def shut_down(self, repo_root):
+        self[repo_root].shut_down()
+        del self.__dict__[repo_root]

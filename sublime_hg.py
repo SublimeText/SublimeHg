@@ -57,14 +57,16 @@ class KillHgServerCommand(sublime_plugin.TextCommand):
     the newest changes are picked up.
     """
     def run(self, edit):
-        repo_root = None
-        if self.view.file_name():
+        try:
             repo_root = utils.find_hg_root(self.view.file_name())
-        if repo_root:
-            running_servers[repo_root].shut_down()
-            del running_servers[repo_root]
-        else:
+        # XXX: Will swallow the same error for the utils. call.
+        except AttributeError:
             sublime.status_message("SublimeHg: No server found for this file.")
+            return
+
+        running_servers.shut_down(repo_root)
+        sublime.status_message("SublimeHg: " + "Killed server for '%s'" %
+                               repo_root)
 
 
 def run_in_console(hg_bin, cmd, encoding=None):
