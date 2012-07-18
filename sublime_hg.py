@@ -7,7 +7,6 @@ import functools
 import subprocess
 import os
 
-from shglib import client
 from shglib import commands
 from shglib import utils
 from shglib.commands import AmbiguousCommandError
@@ -18,7 +17,7 @@ from shglib.commands import HG_COMMANDS_LIST
 from shglib.commands import RUN_IN_OWN_CONSOLE
 
 
-VERSION = '12.6.8'
+VERSION = '12.7.18'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
@@ -27,36 +26,10 @@ CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLa
 # Globals
 #------------------------------------------------------------------------------
 # Holds the existing server so it doesn't have to be reloaded.
-running_servers = {}
+running_servers = utils.HgServers()
 # Helps find the file where the cmdline should be restored.
 recent_file_name = None
 #==============================================================================
-
-
-def start_server(repo_root):
-    """Starts a new Mercurial command server.
-    """
-    # By default, hglib uses 'hg'. User might need to change that on
-    # Windows, for example.
-    hg_bin = utils.get_hg_exe_name()
-    server = client.CmdServerClient(hg_bin=hg_bin, repo_root=repo_root)
-    global running_servers
-    running_servers[repo_root] = server
-    return server
-
-
-def select_server(current_path=None):
-    """Finds an existing server for the given path. If none is found, it
-    creates one for the path.
-    """
-    v = sublime.active_window().active_view()
-    repo_root = utils.find_hg_root(current_path or v.file_name())
-    if not repo_root:
-        raise EnvironmentError("No repo found here.")
-    if not repo_root in running_servers:
-        return start_server(repo_root)
-    else:
-        return running_servers[repo_root]
 
 
 def run_hg_cmd(server, cmd_string):
@@ -211,7 +184,7 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
         self.display_name = self.display_name or s.split(' ')[0]
 
         try:
-            hgs = select_server(current_path=self.cwd)
+            hgs = running_servers[self.cwd]
         except EnvironmentError, e:
             sublime.status_message("SublimeHg: " + str(e))
             return
