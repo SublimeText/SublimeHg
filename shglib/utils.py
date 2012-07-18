@@ -1,5 +1,14 @@
 import sublime
 import os
+import contextlib
+
+
+@contextlib.contextmanager
+def pushd(to):
+    old_cwd = os.getcwdu()
+    os.chdir(to)
+    yield
+    os.chdir(old_cwd)
 
 
 def get_hg_exe_name():
@@ -7,6 +16,7 @@ def get_hg_exe_name():
     # as expected with project settings, etc.
     settings = sublime.load_settings('Global.sublime-settings')
     return settings.get('packages.sublime_hg.hg_exe') or 'hg'
+
 
 def get_preferred_terminal():
     settings = sublime.load_settings('Global.sublime-settings')
