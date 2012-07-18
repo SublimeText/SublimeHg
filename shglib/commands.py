@@ -66,7 +66,7 @@ HG_COMMANDS['default'] = {
                     flags=0,
                     ),
     'bookmark': cmd_data(
-                    invocations={'bookmark (parent revision)': 'bookmark "%(input)s"',
+                    invocations={'bookmark... (parent revision)': 'bookmark "%(input)s"',
                                 },
                     prompt='Bookmark name:',
                     enabled=True,
@@ -144,8 +144,8 @@ HG_COMMANDS['default'] = {
                     help='show help for a given topic or a help overview',
                     flags=0,
                     ),
-    'indentify': cmd_data(
-                    invocations={},
+    'identify': cmd_data(
+                    invocations={'identify': 'identify -nibtB'},
                     prompt='',
                     enabled=True,
                     syntax_file='',
@@ -163,7 +163,7 @@ HG_COMMANDS['default'] = {
                     flags=RUN_IN_OWN_CONSOLE,
                     ),
     'locate': cmd_data(
-                    invocations={'locate': 'locate "%(input)s"'
+                    invocations={'locate...': 'locate "%(input)s"'
                                 },
                     prompt='Pattern:',
                     enabled=True,
@@ -263,7 +263,7 @@ HG_COMMANDS['default'] = {
                     flags=0,
                     ),
     "rename": cmd_data(
-                    invocations={'rename (this file)': 'rename "%(file_name)s" "%(input)s"',
+                    invocations={'rename... (this file)': 'rename "%(file_name)s" "%(input)s"',
                         },
                     prompt="New name:",
                     enabled=True,
@@ -501,7 +501,7 @@ HG_COMMANDS['mq'] = {
                         flags=0,
                         ),
         "qfinish": cmd_data(
-                        invocations={'qfinish': 'qfinish "%(input)s"',
+                        invocations={'qfinish...': 'qfinish "%(input)s"',
                                    },
                         prompt='Patch name:',
                         enabled=True,
@@ -510,7 +510,7 @@ HG_COMMANDS['mq'] = {
                         flags=0,
                         ),
         "qnew": cmd_data(
-                        invocations={'qnew': 'qnew "%(input)s"',
+                        invocations={'qnew...': 'qnew "%(input)s"',
                                        },
                         prompt='Patch name:',
                         enabled=True,
