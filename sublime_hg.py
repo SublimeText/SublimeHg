@@ -1,7 +1,6 @@
 import sublime
 import sublime_plugin
 
-# import shlex
 import threading
 import functools
 import subprocess
@@ -36,9 +35,6 @@ recent_file_name = None
 def run_hg_cmd(server, cmd_string):
     """Runs a Mercurial command through the given command server.
     """
-    # Force strings into bytestrings; shlex doesn't support unicode.
-    # TODO: handle commit messages in unicode.
-    # args = shlex.split(str(cmd_string))
     args = list(CommandLexer(cmd_string))
     if args[0] == 'hg':
         print "SublimeHg:inf: Stripped superfluous 'hg' from command."

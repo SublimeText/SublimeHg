@@ -68,6 +68,8 @@ class CmdServerClient(object):
 			raise EnvironmentError("Server doesn't support basic features.")
 
 	def _write_block(self, data):
+		# Encoding won't work well on Windows:
+		# http://mercurial.selenic.com/wiki/CharacterEncodingOnWindows
 		encoded_data = [x.encode(self.encoding) for x in data]
 		encoded_data = '\0'.join(encoded_data)
 		preamble = struct.pack(">I", len(encoded_data))
