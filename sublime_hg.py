@@ -35,13 +35,7 @@ recent_file_name = None
 def run_hg_cmd(server, cmd_string):
     """Runs a Mercurial command through the given command server.
     """
-    args = list(CommandLexer(cmd_string))
-    if args[0] == 'hg':
-        print "SublimeHg:inf: Stripped superfluous 'hg' from command."
-        args = args[1:]
-
-    print "SublimeHg:inf: Sending command '%s' as %s" % (args, args)
-    server.run_command(args)
+    server.run_command(cmd_string)
     text, exit_code = server.receive_data()
     return text, exit_code
 

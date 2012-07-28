@@ -17,8 +17,13 @@ class Lexer(object):
 
 
 class CommandLexer(Lexer):
+    # todo: describe grammar more formally
     """
-    cmd : NAME (OPTION string?)*
+    cmd : NAME (option string?)*
+    option: -NAME | [^"']+ | NUM
+    string : (["']) .* \1
+    NAME : [a-zA-Z]+
+    NUM : 0-9+
     """
 
     _white_space = ' \t'
@@ -47,6 +52,13 @@ class CommandLexer(Lexer):
         opt_buf.append(self._NAME())
         return ''.join(opt_buf)
 
+    def _VALUE(self):
+        val_buf = []
+        while self.c != EOF and self.c not in self._white_space:
+            val_buf.append(self.c)
+            self.consume()
+        return ''.join(val_buf)
+
     def _STRING(self):
         delimiter = self.c
         self.consume()
@@ -65,15 +77,25 @@ class CommandLexer(Lexer):
         return ''.join(str_buf)
 
     def __iter__(self):
+        if self.c in self._white_space:
+            self._WHITE_SPACE()
+        if self.c.isalpha():
+            yield self._NAME()
+        else:
+            SyntaxError("cannot find command name")
+
         while self.c != EOF:
             if self.c in self._white_space:
                 self._WHITE_SPACE()
-            elif self.c.isalpha():
-                yield self._NAME()
+            # elif self.c.isalpha() and self.status != self._in_option:
+            #     yield self._NAME()
             elif self.c == '-':
                 yield self._OPTION()
             elif self.c in '\'"':
                 yield self._STRING()
+            else:
+                # For example, eats locate *pat* and log -l5
+                yield self._VALUE()
         raise StopIteration
 
 
@@ -87,10 +109,13 @@ if __name__ == '__main__':
             "foo -b",
             "foo --bar",
             "foo -b -c",
+            "foo -b 100",
+            "foo -b200",
             "foo -b 'this is a string'",
             "foo -b 'this is a string' --cmd \"whatever and ever\"",
             "foo -b 'this is \\'a string'",
             "foo -b 'mañana será otro día'",
+            "locate ut*.py",
         )
     for v in values:
         lx = CommandLexer(v)

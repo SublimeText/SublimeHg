@@ -1,11 +1,6 @@
 import sublime_plugin
-import sublime
 
 import os
-
-from shglib.commands import find_cmd
-from shglib.commands import CommandNotFoundError
-from shglib.commands import AmbiguousCommandError
 
 
 CLI_BUFFER_NAME = '==| SublimeHg Console |=='
@@ -90,21 +85,6 @@ class SublimeHgSendLine(sublime_plugin.TextCommand):
         cmd = self.view.substr(self.view.line(self.view.sel()[0].a))
         if cmd.startswith(CLI_PROMPT[0]):
             cmd = cmd[1:].strip()
-
-        try:
-            # TODO: abstract out settings handling.
-            extensions = self.view.settings().get('packages.sublime_hg.extensions', [])
-            format_string, actual_cmd = find_cmd(extensions, cmd.split()[0])
-        except CommandNotFoundError:
-            self.append_output("SublimeHg: Command not found.")
-            sublime.status_message("SublimeHg: Command not found.")
-            self.write_prompt()
-            return
-        except AmbiguousCommandError:
-            sublime.status_message("SublimeHg: Ambiguous command.")
-            self.append_output("SublimeHg: Ambiguous command.")
-            self.write_prompt()
-            return
 
         params = dict(cmd=cmd, cwd=current_path, append=True,
                       # send only first token (for command search)
