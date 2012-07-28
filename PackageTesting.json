@@ -1,0 +1,10 @@
+{
+  "working_dir": "SublimeHg",
+  "data": {
+    "main": "tests/data/data.txt"
+  },
+
+"test_suites": {
+  "utils": ["package_testing_run_data_file_based_tests", "tests.test_utils"]
+  }
+}
