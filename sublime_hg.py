@@ -1,7 +1,7 @@
 import sublime
 import sublime_plugin
 
-import shlex
+# import shlex
 import threading
 import functools
 import subprocess
@@ -15,9 +15,10 @@ from shglib.commands import find_cmd
 from shglib.commands import get_commands_by_ext
 from shglib.commands import HG_COMMANDS_LIST
 from shglib.commands import RUN_IN_OWN_CONSOLE
+from shglib.parsing import CommandLexer
 
 
-VERSION = '12.7.18'
+VERSION = '12.7.28'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
@@ -37,7 +38,8 @@ def run_hg_cmd(server, cmd_string):
     """
     # Force strings into bytestrings; shlex doesn't support unicode.
     # TODO: handle commit messages in unicode.
-    args = shlex.split(str(cmd_string))
+    # args = shlex.split(str(cmd_string))
+    args = list(CommandLexer(cmd_string))
     if args[0] == 'hg':
         print "SublimeHg:inf: Stripped superfluous 'hg' from command."
         args = args[1:]
