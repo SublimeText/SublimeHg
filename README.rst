@@ -109,5 +109,5 @@ Donations
 
 You can tip me through www.gittip.com: guillermooo_.
 
-_guillermo: http://www.gittip.com/guillermooo/
+.. _guillermooo: http://www.gittip.com/guillermooo/
 	
