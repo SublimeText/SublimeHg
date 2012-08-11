@@ -109,8 +109,3 @@ class CmdServerClient(object):
                 self.shut_down()
                 print "Didn't expect such channel."
                 return
-
-
-if __name__ == '__main__':
-    foo = parsing.CommandLexer("foo -l100")
-    print list(foo)

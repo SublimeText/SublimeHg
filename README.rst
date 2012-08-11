@@ -76,7 +76,7 @@ For example::
 
 
 Restarting the Current Server
------------------------------
+=============================
 
 The Mercurial command server will not detect changes to the repository made
 from the outside (perhaps from a command line) while it is running. To restart
@@ -84,7 +84,32 @@ the current server so that external changes are picked up, select
 *Kill Current Server* from the command palette.
 
 Tab Completion
---------------
+==============
 
 While in the command-line, top level commands will be autocompleted when you
 press ``Tab``.
+
+
+Quick Actions
+=============
+
+In some situations, you can perform quick actions.
+
+Log
+***
+
+In a log report (*text.mercurial-log*), select two commit numbers (*keyword.other.changeset-ref.short.mercurial-log*)
+and press *CTRL+ENTER* to **diff the two revisions** (*diff -rSMALLER_REV_NR:LARGER_REV_NR).
+
+If you want to update to a revision number, select a commit number and press *CTRL+SHIFT+ENTER* (*update REV_NO*).
+
+
+Donations
+=========
+
+You can tip me through www.gittip.com:
+
+.. raw:: html
+
+	<a href="http://www.gittip.com/guillermooo/">guillermooo</a> - <iframe style="border: 0; margin: 0; padding: 0;" src="https://www.gittip.com/guillermooo/widget.html" width="48pt" height="20pt"></iframe>
+	
