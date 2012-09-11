@@ -43,21 +43,23 @@ def run_hg_cmd(server, cmd_string):
 class KillHgServerCommand(sublime_plugin.TextCommand):
     """Shut down the server for the current file if it's running.
 
-    The Mercurial command server does not detect state changes in the repo
-    originating outside the command server itself (such as from a separate
-    command line). This command makes it easy to restart the server so that
-    the newest changes are picked up.
+    The Mercurial command server does not detect state changes in the
+    repo originating outside the command server itself (such as from a
+    separate command line). This command makes it easy to restart the
+    server so that the newest changes are picked up.
     """
+
     def run(self, edit):
         try:
             repo_root = utils.find_hg_root(self.view.file_name())
         # XXX: Will swallow the same error for the utils. call.
         except AttributeError:
-            sublime.status_message("SublimeHg: No server found for this file.")
+            msg = "SublimeHg: No server found for this file."
+            sublime.status_message(msg)
             return
 
         running_servers.shut_down(repo_root)
-        sublime.status_message("SublimeHg: " + "Killed server for '%s'" %
+        sublime.status_message("SublimeHg: Killed server for '%s'" %
                                repo_root)
 
 
@@ -122,6 +124,11 @@ class CommandRunnerWorker(threading.Thread):
         except UnicodeDecodeError, e:
             print "SublimeHg: Can't handle command string characters."
             print e
+        except Exception, e:
+            print "SublimeHg: Error while trying to run the command server."
+            print "*" * 80
+            print e
+            print "*" * 80
 
     def show_output(self, data, exit_code):
         # If we're appending to the console, do it even if there's no data.
@@ -179,16 +186,23 @@ class HgCommandRunnerCommand(sublime_plugin.TextCommand):
 
         try:
             hgs = running_servers[self.cwd]
+        except utils.NoRepositoryFoundError, e:
+            msg = "SublimeHg: %s" % e
+            print msg
+            sublime.status_message(msg)
+            return
         except EnvironmentError, e:
-            sublime.status_message("SublimeHg: " + str(e))
+            msg = "SublimeHg: %s (Is the Mercurial binary on your PATH?)" % e
+            print msg
+            sublime.status_message(msg)
             return
         except Exception, e:
-            print str(e)
-            sublime.status_message("SublimeHg: Cannot start server."
-                                   "Your Mercurial version might be too old.")
+            msg = ("SublimeHg: Cannot start server."
+                  "(Your Mercurial version might be too old.)")
+            print msg
+            sublime.status_message(msg)
             return
 
-        # FIXME: some long-eunning commands block an never exit. timeout?
         if getattr(self, 'worker', None) and self.worker.is_alive():
             sublime.status_message("SublimeHg: Processing another request. "
                                    "Try again later.")

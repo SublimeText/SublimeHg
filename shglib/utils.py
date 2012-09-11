@@ -4,6 +4,11 @@ import contextlib
 import client
 
 
+class NoRepositoryFoundError(Exception):
+    def __str__(self):
+        return "No repository found."
+
+
 @contextlib.contextmanager
 def pushd(to):
     old_cwd = os.getcwdu()
@@ -13,10 +18,15 @@ def pushd(to):
 
 
 def get_hg_exe_name():
-    # todo: update this to read the view's settings instead so that it works
-    # as expected with project settings, etc.
-    settings = sublime.load_settings('Global.sublime-settings')
-    return settings.get('packages.sublime_hg.hg_exe') or 'hg'
+    # fixme(guillermooo): There must be a better way of getting the
+    # active view.
+    view = sublime.active_window().active_view()
+    if view:
+        # Retrieving the view's settings guarantees that settings
+        # defined in projects, etc. work as expected.
+        return view.settings().get('packages.sublime_hg.hg_exe') or 'hg'
+    else:
+        return 'hg'
 
 
 def get_preferred_terminal():
@@ -25,8 +35,8 @@ def get_preferred_terminal():
 
 
 def find_hg_root(path):
-    # XXX check whether .hg is a dir too
-    if os.path.exists(os.path.join(path, '.hg')):
+    abs_path = os.path.join(path, '.hg')
+    if os.path.exists(abs_path) and os.path.isdir(abs_path):
         return path
     elif os.path.dirname(path) == path:
         return None
@@ -38,24 +48,18 @@ def is_flag_set(flags, which_one):
     return flags & which_one == which_one
 
 
-# TODO(guillermooo): Subclass dict instead?
 class HgServers(object):
     def __getitem__(self, key):
-        try:
-            return self._select_server(key)
-        except EnvironmentError, e:
-            sublime.status_message("SublimeHg: " + e.message)
-            print "SublimeHg: " + e.message
-            return None
+        return self._select_server(key)
 
     def _select_server(self, current_path=None):
-        """Finds an existing server for the given path. If none is found, it
-        creates one for the path.
+        """Finds an existing server for the given path. If none is
+        found, it creates one for the path.
         """
         v = sublime.active_window().active_view()
         repo_root = find_hg_root(current_path or v.file_name())
         if not repo_root:
-            raise EnvironmentError("No repo found here.")
+            raise NoRepositoryFound()
         if not repo_root in self.__dict__:
             server = self._start_server(repo_root)
             self.__dict__[repo_root] = server
