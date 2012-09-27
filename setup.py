@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-PACKAGE_VERSION = "12.7.18"
+PACKAGE_VERSION = "12.9.27"
 
 """Commands to build and manage .sublime-package archives with distutils."""
 

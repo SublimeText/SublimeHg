@@ -1,3 +1,5 @@
+12.9.27
+	- enable use of double quotes in user-supplied input
 12.6.8
 	- add command to kill servers
 	- improve error handling when current view does not belong to any repo

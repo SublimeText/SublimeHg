@@ -5,6 +5,7 @@ import threading
 import functools
 import subprocess
 import os
+import re
 
 from shglib import commands
 from shglib import utils
@@ -81,6 +82,13 @@ def run_in_console(hg_bin, cmd, encoding=None):
                                    "to your settings.")
     else:
         raise NotImplementedError("Cannot run consoles in OS X. Not implemented.")
+
+
+def escape(s, c, esc='\\\\'):
+    # FIXME: won't escape \\" and such correctly.
+    pat = "(?<!%s)%s" % (esc, c)
+    r = re.compile(pat)
+    return r.sub(esc + c, s)
 
 
 class CommandRunnerWorker(threading.Thread):
@@ -282,7 +290,7 @@ class HgCommandAskingCommand(sublime_plugin.TextCommand):
                                                                 self.content})
 
     def on_done(self, s):
-        self.content['input'] = s
+        self.content['input'] = escape(s, '"')
         self.view.run_command("hg_command_runner", {"cmd": self.fmtstr %
                                                                 self.content})
 

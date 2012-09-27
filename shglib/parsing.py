@@ -61,16 +61,21 @@ class CommandLexer(Lexer):
 
     def _STRING(self):
         delimiter = self.c
-        self.consume()
         str_buf = []
+        self.consume()
         while self.c != EOF:
             if self.c == '\\':
+                self.consume()
+                if self.c == delimiter:
+                    str_buf.append(self.c)
+                    self.consume()
+                else:
+                    str_buf.append('\\')
+                    str_buf.append(self.c)
+                    self.consume()
+            else:
                 str_buf.append(self.c)
                 self.consume()
-                if self.c == EOF or self.c not in (delimiter, '\\'):
-                    SyntaxError("expected escape sequence, got '\\%s'" % self.c)
-            str_buf.append(self.c)
-            self.consume()
             if self.c == delimiter:
                 self.consume()
                 break
@@ -87,8 +92,6 @@ class CommandLexer(Lexer):
         while self.c != EOF:
             if self.c in self._white_space:
                 self._WHITE_SPACE()
-            # elif self.c.isalpha() and self.status != self._in_option:
-            #     yield self._NAME()
             elif self.c == '-':
                 yield self._OPTION()
             elif self.c in '\'"':
@@ -100,10 +103,7 @@ class CommandLexer(Lexer):
 
 
 if __name__ == '__main__':
-    # lx = Lexer(" foo")
-    # while lx.c != EOF:
-    #     print lx.c
-    #     lx.consume()
+    # todo: add tests
     values = (
             "foo",
             "foo -b",
@@ -115,6 +115,8 @@ if __name__ == '__main__':
             "foo -b 'this is a string' --cmd \"whatever and ever\"",
             "foo -b 'this is \\'a string'",
             "foo -b 'mañana será otro día'",
+            "commit -m 'there are \" some things here'",
+            "commit -m 'there are \u some things here'",
             "locate ut*.py",
         )
     for v in values:
