@@ -18,7 +18,7 @@ from shglib.commands import RUN_IN_OWN_CONSOLE
 from shglib.parsing import CommandLexer
 
 
-VERSION = '12.8.11'
+VERSION = '12.8.12'
 
 
 CMD_LINE_SYNTAX = 'Packages/SublimeHg/Support/SublimeHg Command Line.hidden-tmLanguage'
@@ -80,8 +80,13 @@ def run_in_console(hg_bin, cmd, encoding=None):
             raise EnvironmentError("No terminal found."
                                    "You might want to add packages.sublime_hg.terminal "
                                    "to your settings.")
+    elif sublime.platform() == 'osx':
+        cmd_str = "%s %s" % (hg_bin, cmd)
+        osa = "tell application \"Terminal\"\ndo script \"cd '%s' && %s\"\nactivate\nend tell" % (os.getcwd(), cmd_str)
+
+        subprocess.Popen(["osascript", "-e", osa])
     else:
-        raise NotImplementedError("Cannot run consoles in OS X. Not implemented.")
+        raise NotImplementedError("Cannot run consoles on your OS: %s. Not implemented." % sublime.platform())
 
 
 def escape(s, c, esc='\\\\'):
